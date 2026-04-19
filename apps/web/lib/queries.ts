@@ -53,3 +53,21 @@ export async function getSessionMeta(sessionId: string) {
   const [row] = await db.select().from(sessions).where(eq(sessions.sessionId, sessionId)).limit(1)
   return row ?? null
 }
+
+export async function getTokensPerDay(days: number) {
+  const db = getDb()
+  const rows = await db.execute<{ day: Date; input_tokens: number; output_tokens: number }>(sql`
+    SELECT
+      day::date AS day,
+      SUM(input_tokens)::bigint AS input_tokens,
+      SUM(output_tokens)::bigint AS output_tokens
+    FROM usage_daily
+    WHERE day >= now() - make_interval(days => ${days}::int)
+    GROUP BY day ORDER BY day ASC
+  `)
+  return (rows as unknown as Array<{ day: Date; input_tokens: number; output_tokens: number }>).map((r) => ({
+    day: new Date(r.day).toISOString().slice(0, 10),
+    input: Number(r.input_tokens),
+    output: Number(r.output_tokens),
+  }))
+}
