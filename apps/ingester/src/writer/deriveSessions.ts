@@ -73,6 +73,6 @@ export async function rollupSessions(db: Db, sessionIds: string[]): Promise<void
       total_cache_read   = EXCLUDED.total_cache_read,
       estimated_cost_usd = EXCLUDED.estimated_cost_usd,
       first_user_prompt  = EXCLUDED.first_user_prompt,
-      status             = EXCLUDED.status
+      status             = CASE WHEN sessions.status = 'active' THEN 'active' ELSE EXCLUDED.status END
   `)
 }
