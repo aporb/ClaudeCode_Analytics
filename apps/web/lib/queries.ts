@@ -71,3 +71,34 @@ export async function getTokensPerDay(days: number) {
     output: Number(r.output_tokens),
   }))
 }
+
+export async function getTopTools(days: number) {
+  const db = getDb()
+  const rows = await db.execute<{ tool_name: string; calls: number; errors: number }>(sql`
+    SELECT tool_name, COUNT(*) AS calls, COUNT(*) FILTER (WHERE is_error) AS errors
+    FROM tool_calls
+    WHERE timestamp >= now() - make_interval(days => ${days}::int)
+    GROUP BY tool_name ORDER BY calls DESC LIMIT 10
+  `)
+  return (rows as unknown as Array<{ tool_name: string; calls: number; errors: number }>).map((r) => ({
+    tool: r.tool_name,
+    calls: Number(r.calls),
+    errors: Number(r.errors),
+    errorRate: Number(r.calls) > 0 ? (Number(r.errors) / Number(r.calls)) * 100 : 0,
+  }))
+}
+
+export async function getCostByProject(days: number) {
+  const db = getDb()
+  const rows = await db.execute<{ project_path: string | null; cost: string }>(sql`
+    SELECT project_path, SUM(estimated_cost_usd)::numeric(10,2) AS cost
+    FROM sessions
+    WHERE started_at >= now() - make_interval(days => ${days}::int)
+      AND project_path IS NOT NULL AND estimated_cost_usd IS NOT NULL
+    GROUP BY project_path ORDER BY cost DESC NULLS LAST LIMIT 10
+  `)
+  return (rows as unknown as Array<{ project_path: string | null; cost: string }>).map((r) => ({
+    project: (r.project_path ?? '(none)').replace(/^\/Users\/[^/]+\//, '~/'),
+    cost: Number(r.cost),
+  }))
+}
