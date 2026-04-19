@@ -1,6 +1,6 @@
 import 'server-only'
 import { getDb } from './db'
-import { sessions, events } from '@cca/db/schema'
+import { sessions, events, toolCalls } from '@cca/db/schema'
 import { and, asc, desc, eq, gte, ilike, sql } from 'drizzle-orm'
 
 export interface SessionsQuery {
@@ -41,6 +41,11 @@ export async function listSessions(q: SessionsQuery) {
 export async function getSessionEvents(sessionId: string) {
   const db = getDb()
   return db.select().from(events).where(eq(events.sessionId, sessionId)).orderBy(asc(events.timestamp))
+}
+
+export async function getSessionToolCalls(sessionId: string) {
+  const db = getDb()
+  return db.select().from(toolCalls).where(eq(toolCalls.sessionId, sessionId)).orderBy(asc(toolCalls.timestamp))
 }
 
 export async function getSessionMeta(sessionId: string) {

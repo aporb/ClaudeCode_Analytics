@@ -1,7 +1,8 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { getSessionEvents, getSessionMeta } from '@/lib/queries'
+import { getSessionEvents, getSessionMeta, getSessionToolCalls } from '@/lib/queries'
 import { EventRow } from '@/components/EventRow'
+import { ToolCallDetails } from '@/components/ToolCallDetails'
 import { Badge } from '@/components/ui/badge'
 
 interface PageProps {
@@ -10,8 +11,13 @@ interface PageProps {
 
 export default async function SessionPage({ params }: PageProps) {
   const { id } = await params
-  const [meta, evs] = await Promise.all([getSessionMeta(id), getSessionEvents(id)])
+  const [meta, evs, tools] = await Promise.all([
+    getSessionMeta(id),
+    getSessionEvents(id),
+    getSessionToolCalls(id),
+  ])
   if (!meta) notFound()
+  const toolsByUuid = new Map(tools.map((t) => [t.uuid, t]))
 
   return (
     <main>
@@ -35,17 +41,30 @@ export default async function SessionPage({ params }: PageProps) {
 
       <div className="border rounded-md divide-y">
         {evs.map((e) => (
-          <EventRow
-            key={e.uuid}
-            event={{
-              uuid: e.uuid,
-              type: e.type,
-              subtype: e.subtype,
-              timestamp: e.timestamp,
-              isSidechain: e.isSidechain,
-              payload: e.payload,
-            }}
-          />
+          <div key={e.uuid}>
+            <EventRow
+              event={{
+                uuid: e.uuid,
+                type: e.type,
+                subtype: e.subtype,
+                timestamp: e.timestamp,
+                isSidechain: e.isSidechain,
+                payload: e.payload,
+              }}
+            />
+            {toolsByUuid.has(e.uuid) && (
+              <ToolCallDetails
+                call={{
+                  uuid: e.uuid,
+                  toolName: toolsByUuid.get(e.uuid)!.toolName,
+                  input: toolsByUuid.get(e.uuid)!.input,
+                  result: toolsByUuid.get(e.uuid)!.result,
+                  durationMs: toolsByUuid.get(e.uuid)!.durationMs,
+                  isError: toolsByUuid.get(e.uuid)!.isError,
+                }}
+              />
+            )}
+          </div>
         ))}
       </div>
     </main>
