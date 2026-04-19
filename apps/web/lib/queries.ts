@@ -88,6 +88,20 @@ export async function getTopTools(days: number) {
   }))
 }
 
+export async function getActivityByDay(days: number) {
+  const db = getDb()
+  const rows = await db.execute<{ day: Date; sessions: number }>(sql`
+    SELECT date_trunc('day', started_at)::date AS day, COUNT(*) AS sessions
+    FROM sessions
+    WHERE started_at >= now() - make_interval(days => ${days}::int)
+    GROUP BY 1 ORDER BY 1 ASC
+  `)
+  return (rows as unknown as Array<{ day: Date; sessions: number }>).map((r) => ({
+    day: new Date(r.day).toISOString().slice(0, 10),
+    sessions: Number(r.sessions),
+  }))
+}
+
 export async function getCostByProject(days: number) {
   const db = getDb()
   const rows = await db.execute<{ project_path: string | null; cost: string }>(sql`
