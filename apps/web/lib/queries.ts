@@ -1,7 +1,7 @@
 import 'server-only'
 import { getDb } from './db'
-import { sessions } from '@cca/db/schema'
-import { and, desc, gte, ilike, sql } from 'drizzle-orm'
+import { sessions, events } from '@cca/db/schema'
+import { and, asc, desc, eq, gte, ilike, sql } from 'drizzle-orm'
 
 export interface SessionsQuery {
   project?: string
@@ -36,4 +36,15 @@ export async function listSessions(q: SessionsQuery) {
     .orderBy(desc(sessions.startedAt))
     .limit(q.limit ?? 25)
     .offset(q.offset ?? 0)
+}
+
+export async function getSessionEvents(sessionId: string) {
+  const db = getDb()
+  return db.select().from(events).where(eq(events.sessionId, sessionId)).orderBy(asc(events.timestamp))
+}
+
+export async function getSessionMeta(sessionId: string) {
+  const db = getDb()
+  const [row] = await db.select().from(sessions).where(eq(sessions.sessionId, sessionId)).limit(1)
+  return row ?? null
 }
