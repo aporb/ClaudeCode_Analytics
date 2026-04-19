@@ -1,0 +1,26 @@
+{
+  "name": "cca",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@9.15.0",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "typecheck": "pnpm -r typecheck",
+    "db:generate": "pnpm --filter @cca/db generate",
+    "db:migrate": "pnpm --filter @cca/db migrate",
+    "db:seed": "pnpm --filter @cca/db seed",
+    "backfill": "pnpm --filter @cca/ingester backfill"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4",
+    "@types/node": "22.10.0",
+    "tsx": "4.19.2",
+    "typescript": "5.7.2",
+    "vitest": "2.1.8"
+  }
+}
