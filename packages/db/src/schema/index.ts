@@ -1,2 +1,1 @@
-// Schema tables will be exported from here.
-export {}
+export * from './events.ts'
