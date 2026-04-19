@@ -7,10 +7,13 @@ import { Badge } from '@/components/ui/badge'
 
 interface PageProps {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ raw?: string }>
 }
 
-export default async function SessionPage({ params }: PageProps) {
+export default async function SessionPage({ params, searchParams }: PageProps) {
   const { id } = await params
+  const sp = await searchParams
+  const isRaw = sp.raw === '1' || sp.raw === 'true'
   const [meta, evs, tools] = await Promise.all([
     getSessionMeta(id),
     getSessionEvents(id),
@@ -36,6 +39,12 @@ export default async function SessionPage({ params }: PageProps) {
           <Badge variant="outline">{meta.toolCallCount ?? 0} tools</Badge>
           {meta.durationSec ? <Badge variant="outline">{Math.round(meta.durationSec / 60)}m</Badge> : null}
           {meta.estimatedCostUsd ? <Badge variant="outline">${Number(meta.estimatedCostUsd).toFixed(2)}</Badge> : null}
+          <Link
+            href={isRaw ? `/session/${id}` : `/session/${id}?raw=1`}
+            className="text-xs underline underline-offset-4 text-muted-foreground hover:text-foreground ml-2"
+          >
+            {isRaw ? 'hide secrets' : 'show raw'}
+          </Link>
         </div>
       </header>
 
@@ -51,6 +60,7 @@ export default async function SessionPage({ params }: PageProps) {
                 isSidechain: e.isSidechain,
                 payload: e.payload,
               }}
+              raw={isRaw}
             />
             {toolsByUuid.has(e.uuid) && (
               <ToolCallDetails
@@ -62,6 +72,7 @@ export default async function SessionPage({ params }: PageProps) {
                   durationMs: toolsByUuid.get(e.uuid)!.durationMs,
                   isError: toolsByUuid.get(e.uuid)!.isError,
                 }}
+                raw={isRaw}
               />
             )}
           </div>

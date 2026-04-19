@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
+import { applyRedactionDeep } from '@/lib/redaction'
 
 interface ToolCall {
   uuid: string
@@ -12,8 +13,10 @@ interface ToolCall {
   isError: boolean | null
 }
 
-export function ToolCallDetails({ call }: { call: ToolCall }) {
+export function ToolCallDetails({ call, raw }: { call: ToolCall; raw: boolean }) {
   const [open, setOpen] = useState(false)
+  const redactedInput = applyRedactionDeep(call.input, raw)
+  const redactedResult = call.result != null ? applyRedactionDeep(call.result, raw) : null
   return (
     <div className="ml-[280px] my-1 text-xs">
       <button
@@ -29,12 +32,12 @@ export function ToolCallDetails({ call }: { call: ToolCall }) {
       {open && (
         <pre className="mt-1 p-3 rounded bg-muted/50 overflow-x-auto whitespace-pre-wrap break-words">
           <div className="text-muted-foreground mb-1">input:</div>
-          <div>{JSON.stringify(call.input, null, 2)}</div>
-          {call.result != null && (
+          <div>{JSON.stringify(redactedInput, null, 2)}</div>
+          {redactedResult != null && (
             <>
               <div className="text-muted-foreground mt-3 mb-1">result{call.isError ? ' (error)' : ''}:</div>
               <div>
-                {typeof call.result === 'string' ? call.result : JSON.stringify(call.result, null, 2)}
+                {typeof redactedResult === 'string' ? redactedResult : JSON.stringify(redactedResult, null, 2)}
               </div>
             </>
           )}

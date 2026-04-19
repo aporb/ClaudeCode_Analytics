@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils'
+import { applyRedaction } from '@/lib/redaction'
 
 interface EventLike {
   uuid: string
@@ -39,8 +40,9 @@ const kindStyle: Record<string, string> = {
   other: 'text-muted-foreground',
 }
 
-export function EventRow({ event }: { event: EventLike }) {
+export function EventRow({ event, raw }: { event: EventLike; raw: boolean }) {
   const { kind, text } = extractPreview(event.payload)
+  const display = applyRedaction(text, raw)
   const label = `${event.type}/${event.subtype ?? '-'}`
   return (
     <div
@@ -53,7 +55,7 @@ export function EventRow({ event }: { event: EventLike }) {
       <span className="text-muted-foreground tabular-nums">{hhmmss(event.timestamp)}</span>
       <span className="text-muted-foreground truncate">{label}</span>
       <span className={cn('whitespace-pre-wrap break-words', kindStyle[kind])}>
-        {text.replace(/\s+/g, ' ').slice(0, 500)}
+        {display.replace(/\s+/g, ' ').slice(0, 500)}
       </span>
     </div>
   )
