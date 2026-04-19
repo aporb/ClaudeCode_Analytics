@@ -114,12 +114,18 @@ importers:
       dayjs:
         specifier: 1.11.13
         version: 1.11.13
+      drizzle-orm:
+        specifier: 0.36.4
+        version: 0.36.4(@types/react@19.0.1)(postgres@3.4.5)(react@19.0.0)
       lucide-react:
         specifier: 0.468.0
         version: 0.468.0(react@19.0.0)
       next:
         specifier: 16.0.0
         version: 16.0.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+      postgres:
+        specifier: 3.4.5
+        version: 3.4.5
       react:
         specifier: 19.0.0
         version: 19.0.0

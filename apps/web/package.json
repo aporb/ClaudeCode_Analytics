@@ -21,6 +21,8 @@
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "recharts": "2.15.0",
+    "drizzle-orm": "0.36.4",
+    "postgres": "3.4.5",
     "server-only": "0.0.1",
     "tailwind-merge": "2.5.5"
   },
