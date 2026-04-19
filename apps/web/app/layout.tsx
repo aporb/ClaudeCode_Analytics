@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import './globals.css'
+import { LiveIndicator } from '@/components/LiveIndicator'
 
 export const metadata: Metadata = {
   title: 'Claude Code Analytics',
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </Link>
               ))}
             </nav>
+            <LiveIndicator />
           </div>
         </header>
         <div className="max-w-7xl mx-auto px-6 py-8">
