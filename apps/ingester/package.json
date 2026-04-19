@@ -13,6 +13,7 @@
     "@cca/db": "workspace:*",
     "@cca/parsers": "workspace:*",
     "@clack/prompts": "0.8.2",
+    "chokidar": "4.0.1",
     "cli-progress": "3.12.0",
     "commander": "12.1.0",
     "p-limit": "6.1.0",
