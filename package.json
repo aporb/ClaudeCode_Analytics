@@ -15,7 +15,7 @@
     "db:migrate": "pnpm --filter @cca/db migrate",
     "db:seed": "pnpm --filter @cca/db seed",
     "backfill": "pnpm --filter @cca/ingester backfill",
-    "cca": "pnpm --filter @cca/cli run cca --"
+    "cca": "pnpm --filter @cca/cli exec tsx src/bin.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
