@@ -18,7 +18,7 @@ export async function rollupSessions(db: Db, sessionIds: string[]): Promise<void
     )
     SELECT
       e.session_id,
-      (array_agg(e.project_path) FILTER (WHERE e.project_path IS NOT NULL))[1] AS project_path,
+      (array_agg(e.cwd) FILTER (WHERE e.cwd IS NOT NULL))[1] AS project_path,
       MIN(e.timestamp) AS started_at,
       MAX(e.timestamp) AS ended_at,
       EXTRACT(EPOCH FROM (MAX(e.timestamp) - MIN(e.timestamp)))::int AS duration_sec,

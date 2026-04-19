@@ -40,7 +40,7 @@ describe('end-to-end backfill', () => {
     const sess = await sql`SELECT * FROM sessions WHERE session_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'`
     expect(sess).toHaveLength(1)
     expect(sess[0]?.subagent_count).toBeGreaterThanOrEqual(1)
-    expect(sess[0]?.project_path).toBeNull()
+    expect(sess[0]?.project_path).toBe('/Users/x/proj')
     expect(Number(sess[0]?.total_input_tokens)).toBe(100)
 
     const hist = await sql`SELECT COUNT(*) AS n FROM prompts_history`
