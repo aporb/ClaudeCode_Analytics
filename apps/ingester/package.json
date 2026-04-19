@@ -19,6 +19,9 @@
     "picocolors": "1.1.1"
   },
   "devDependencies": {
-    "@types/cli-progress": "3.11.6"
+    "@types/cli-progress": "3.11.6",
+    "dotenv": "16.4.5",
+    "drizzle-orm": "0.36.4",
+    "postgres": "3.4.5"
   }
 }
