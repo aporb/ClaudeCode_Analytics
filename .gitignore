@@ -8,3 +8,4 @@ coverage/
 .vitest/
 .remember/
 scripts/run-daemon.sh
+.next/

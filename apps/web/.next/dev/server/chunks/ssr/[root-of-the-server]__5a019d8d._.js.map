@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 14, "column": 0}, "map": {"version":3,"sources":["file:///Users/amynporb/Documents/_Projects/ClaudeCode_Analytics/apps/web/app/page.tsx"],"sourcesContent":["export default function HomePage() {\n  return (\n    <main className=\"p-8\">\n      <h1 className=\"text-2xl font-semibold\">Claude Code Analytics</h1>\n      <p className=\"text-muted-foreground mt-2\">scaffold ok — routes coming</p>\n    </main>\n  )\n}\n"],"names":[],"mappings":";;;;;;AAAe,SAAS;IACtB,qBACE,6WAAC;QAAK,WAAU;;0BACd,6WAAC;gBAAG,WAAU;0BAAyB;;;;;;0BACvC,6WAAC;gBAAE,WAAU;0BAA6B;;;;;;;;;;;;AAGhD","debugId":null}}]
-}
