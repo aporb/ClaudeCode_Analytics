@@ -94,7 +94,9 @@ export async function backfillAll(claudeHome: string, opts: { concurrency?: numb
   console.log(pc.dim('refreshing materialized views...'))
   try { await refreshMaterializedViews(db) } catch {
     // CONCURRENTLY requires the view to be populated once; do a non-concurrent refresh first
-    await db.execute(sql`REFRESH MATERIALIZED VIEW usage_daily`)
+    try { await db.execute(sql`REFRESH MATERIALIZED VIEW usage_daily`) } catch {
+      // View may not exist in test/minimal environments — skip silently
+    }
   }
 
   console.log(pc.green(`\n✓ backfill complete: ${totalEvents} events across ${allSessions.size} sessions`))
