@@ -65,4 +65,17 @@ describe('schema: events', () => {
       ]),
     )
   })
+
+  it('has ancillary tables', async () => {
+    const tables = await sql<Array<{ table_name: string }>>`
+      SELECT table_name FROM information_schema.tables
+      WHERE table_schema = 'public' ORDER BY table_name`
+    const names = tables.map((t) => t.table_name)
+    expect(names).toEqual(
+      expect.arrayContaining([
+        'prompts_history', 'todos', 'file_snapshots', 'shell_snapshots',
+        'model_pricing', '_ingest_cursors',
+      ]),
+    )
+  })
 })
