@@ -106,3 +106,37 @@ Manual smoke with real `~/.claude`:
 
 **Plan 3 (Web UI)** — Next.js 16 App Router on `localhost:3939`. Sessions list, session detail / replay, search, analytics dashboard, live activity indicator via the daemon's SSE. Consider a polish pass first to sanitize `\u0000` in the parser and switch `project_path` derivation to `cwd`.
 
+---
+
+## 2026-04-19 — Plan 3 (Web UI) complete
+
+Branch: `feat/plan-3-web-ui`. 16 tasks.
+
+### What was built
+
+- `apps/web` Next.js 16 App Router workspace on `localhost:3939`.
+- Four routes: sessions list (`/`), session detail (`/session/<id>`), search (`/search`), stats (`/stats`).
+- Tailwind 3 + shadcn/ui base components (button, card, input, badge, table).
+- Server-rendered pages query Postgres directly via an HMR-safe `getDb()` singleton.
+- Recharts for tokens-over-time line chart, top-tools and cost-by-project bar charts.
+- Hand-rolled activity heatmap (13-week calendar grid).
+- Live-activity indicator in the header — client component consuming the daemon's SSE via `EventSource`.
+- Render-layer redaction for secrets with `?raw=1` URL toggle.
+
+### What Plan 3 deliberately did NOT do
+
+- No auth — localhost-only single-user.
+- No user-editable saved views / dashboards.
+- No write actions from the UI (read-only).
+- No data export — use psql.
+
+### Not included (polish ideas)
+
+- Model-mix pie chart (deferred — tokens/cost already surface model info).
+- Cache-hit-rate chart.
+- Auto-refresh of session detail when the underlying session is still `active`.
+
+### Next
+
+System is feature-complete per the spec. Optional future: AI-assisted review ("summarize this session"), exports with redaction, multi-machine sync.
+

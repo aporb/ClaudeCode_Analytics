@@ -34,6 +34,9 @@ pnpm db:seed
 
 # One-shot backfill of everything under $CLAUDE_HOME
 pnpm backfill
+
+# Start the daemon to capture new sessions live (optional)
+pnpm --filter @cca/ingester exec tsx src/cli.ts daemon
 ```
 
 ## Running tests
@@ -53,7 +56,16 @@ Tests hit the real `claude_code_test` database, which Task 7's `drizzle-kit push
 
 See `STATUS.md` for the latest backfill snapshot and known deferred issues.
 
-## Next milestones
+## Web UI
 
-- **Plan 2** (live capture + CLI): chokidar tailer, launchd daemon, Claude Code hook relay, `cca` CLI commands.
-- **Plan 3** (web UI): Next.js 16 App Router app on `localhost:3939` — sessions list, session detail / replay, search, analytics dashboard.
+```bash
+pnpm web       # dev server at http://localhost:3939
+```
+
+Four views:
+- `/` — sessions list with filters (project/since/model) and pagination
+- `/session/<uuid>` — event timeline with tool-call inspector; `?raw=1` shows unredacted content
+- `/search?q=...` — full-text search with highlighted snippets
+- `/stats` — tokens over time, top tools, cost by project, activity heatmap
+
+The header shows a live-activity indicator driven by the daemon's SSE stream (`http://localhost:9939/events`).
