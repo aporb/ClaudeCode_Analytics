@@ -1,16 +1,12 @@
-import { getDb } from '@/lib/db'
-import { events } from '@cca/db/schema'
-import { sql } from 'drizzle-orm'
+import { listSessions } from '@/lib/queries'
+import { SessionsTable } from '@/components/SessionsTable'
 
 export default async function HomePage() {
-  const db = getDb()
-  const [row] = await db.select({ c: sql<number>`count(*)` }).from(events)
+  const rows = await listSessions({ limit: 50 })
   return (
-    <main className="p-8">
-      <h1 className="text-2xl font-semibold">Claude Code Analytics</h1>
-      <p className="text-muted-foreground mt-2">
-        events in DB: {Number(row?.c ?? 0).toLocaleString()}
-      </p>
+    <main>
+      <h1 className="text-xl font-semibold mb-6">Sessions</h1>
+      <SessionsTable rows={rows} />
     </main>
   )
 }
