@@ -18,7 +18,7 @@ async function main() {
   const db = drizzle(sql)
   await migrate(db, { migrationsFolder: './drizzle' })
   // Also apply the raw-SQL migrations that drizzle-kit can't express
-  for (const f of ['0001_events_gin.sql', '0003_messages_indexes.sql']) {
+  for (const f of ['0001_events_gin.sql', '0003_messages_indexes.sql', '0010_usage_daily_view.sql']) {
     const path = resolve(__dirname, '..', 'drizzle', f)
     try {
       const fs = await import('node:fs/promises')
