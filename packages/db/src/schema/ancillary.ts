@@ -1,16 +1,15 @@
-import { bigserial, integer, jsonb, pgTable, primaryKey, text, timestamp, unique } from 'drizzle-orm/pg-core'
+import { bigserial, integer, jsonb, pgTable, primaryKey, text, timestamp } from 'drizzle-orm/pg-core'
 
-export const promptsHistory = pgTable(
-  'prompts_history',
-  {
-    id: bigserial('id', { mode: 'number' }).primaryKey(),
-    projectPath: text('project_path'),
-    display: text('display'),
-    pastedContents: jsonb('pasted_contents'),
-    typedAt: timestamp('typed_at', { withTimezone: true }),
-  },
-  (t) => [unique('prompts_history_dedupe').on(t.typedAt, t.display, t.projectPath)],
-)
+export const promptsHistory = pgTable('prompts_history', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  projectPath: text('project_path'),
+  display: text('display'),
+  pastedContents: jsonb('pasted_contents'),
+  typedAt: timestamp('typed_at', { withTimezone: true }),
+})
+// Dedup uniqueness is enforced at the DB level by a functional unique index
+// on (typed_at, md5(display), project_path) — see 0005_prompts_history_dedup_fix.sql.
+// drizzle-kit can't express function-based indexes, so we don't define it here.
 
 export const todos = pgTable(
   'todos',

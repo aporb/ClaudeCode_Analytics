@@ -1,0 +1,1 @@
+ALTER TABLE "prompts_history" DROP CONSTRAINT "prompts_history_dedupe";
