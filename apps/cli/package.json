@@ -1,0 +1,20 @@
+{
+  "name": "@cca/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": { "cca": "./src/bin.ts" },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "cca": "tsx src/bin.ts"
+  },
+  "dependencies": {
+    "@cca/core": "workspace:*",
+    "@cca/db": "workspace:*",
+    "commander": "12.1.0",
+    "dayjs": "1.11.13",
+    "dotenv": "16.4.5",
+    "eventsource-parser": "3.0.0",
+    "picocolors": "1.1.1"
+  }
+}

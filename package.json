@@ -14,7 +14,8 @@
     "db:generate": "pnpm --filter @cca/db generate",
     "db:migrate": "pnpm --filter @cca/db migrate",
     "db:seed": "pnpm --filter @cca/db seed",
-    "backfill": "pnpm --filter @cca/ingester backfill"
+    "backfill": "pnpm --filter @cca/ingester backfill",
+    "cca": "pnpm --filter @cca/cli run cca --"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
