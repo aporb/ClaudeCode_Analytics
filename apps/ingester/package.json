@@ -1,0 +1,24 @@
+{
+  "name": "@cca/ingester",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "backfill": "tsx src/cli.ts backfill",
+    "rebuild-derived": "tsx src/cli.ts rebuild-derived"
+  },
+  "dependencies": {
+    "@cca/core": "workspace:*",
+    "@cca/db": "workspace:*",
+    "@cca/parsers": "workspace:*",
+    "@clack/prompts": "0.8.2",
+    "cli-progress": "3.12.0",
+    "commander": "12.1.0",
+    "p-limit": "6.1.0",
+    "picocolors": "1.1.1"
+  },
+  "devDependencies": {
+    "@types/cli-progress": "3.11.6"
+  }
+}
