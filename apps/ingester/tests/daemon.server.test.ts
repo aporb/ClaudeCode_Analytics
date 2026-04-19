@@ -74,4 +74,15 @@ describe('daemon server', () => {
     expect(text).toMatch(/event: (event|heartbeat)/)
     controller.abort()
   })
+
+  it('responds with CORS headers on /status', async () => {
+    const res = await fetch(`http://localhost:${PORT}/status`)
+    expect(res.headers.get('access-control-allow-origin')).toBe('*')
+  })
+
+  it('handles OPTIONS preflight', async () => {
+    const res = await fetch(`http://localhost:${PORT}/events`, { method: 'OPTIONS' })
+    expect(res.status).toBe(204)
+    expect(res.headers.get('access-control-allow-methods')).toContain('GET')
+  })
 })

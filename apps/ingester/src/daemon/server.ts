@@ -7,6 +7,12 @@ import type { Broadcaster, BroadcastEvent } from './broadcaster.js'
 
 type Db = PostgresJsDatabase<typeof schema>
 
+function addCors(res: ServerResponse): void {
+  res.setHeader('access-control-allow-origin', '*')
+  res.setHeader('access-control-allow-methods', 'GET, POST, OPTIONS')
+  res.setHeader('access-control-allow-headers', 'content-type, accept')
+}
+
 export interface ServerOptions {
   port: number
   db: Db
@@ -36,6 +42,12 @@ export async function startServer(opts: ServerOptions): Promise<RunningServer> {
   opts.broadcaster.subscribe(() => { lastEventAt = Date.now() })
 
   const server = createServer(async (req, res) => {
+    addCors(res)
+
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204); res.end(); return
+    }
+
     const url = new URL(req.url ?? '/', `http://localhost:${opts.port}`)
     if (req.method === 'GET' && url.pathname === '/status') {
       writeJson(res, 200, {
