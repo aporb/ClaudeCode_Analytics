@@ -8,6 +8,9 @@
     "jsx": "preserve",
     "allowJs": true,
     "incremental": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "plugins": [{ "name": "next" }],
     "paths": { "@/*": ["./*"] },
     "types": ["react", "react-dom", "node"]
