@@ -7,6 +7,7 @@ import { sql } from 'drizzle-orm'
 import { closeDb, getDb } from '@cca/db'
 import { rollupSessions } from './writer/deriveSessions.js'
 import { backfillAll } from './backfill/orchestrator.js'
+import { startDaemon } from './daemon/index.js'
 
 const program = new Command()
 program.name('cca-ingester').description('CCA ingester commands')
@@ -34,6 +35,15 @@ program
     }
     console.log(`rebuilt ${sessionIds.length} sessions`)
     await closeDb()
+  })
+
+program
+  .command('daemon')
+  .description('Run the live tailer + hook relay daemon')
+  .option('--port <n>', 'HTTP port for hook relay + SSE', '9939')
+  .action(async (opts) => {
+    const home = process.env.CLAUDE_HOME ?? `${process.env.HOME}/.claude`
+    await startDaemon({ claudeHome: home, port: Number(opts.port) })
   })
 
 program.parseAsync().catch((e) => { console.error(e); process.exit(1) })
