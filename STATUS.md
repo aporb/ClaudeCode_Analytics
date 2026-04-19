@@ -2,7 +2,7 @@
 
 ## 2026-04-19 — Plan 1 (Foundation) complete
 
-Branch: `feat/plan-1-foundation`. 31 commits since `main`.
+Branch: `feat/plan-1-foundation`. See `git log --oneline main..feat/plan-1-foundation` for commit list (~35 commits including the post-merge cleanups).
 
 ### What was built
 
