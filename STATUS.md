@@ -56,3 +56,53 @@ Top 3 tools: `Read` (25,879 calls), `Bash` (21,905), `Edit` (8,897).
 ### Next
 
 Write Plan 2 (live capture + CLI) once any bug-fix polish on Plan 1 is done.
+
+---
+
+## 2026-04-19 — Plan 2 (Live capture + CLI) complete
+
+Branch: `feat/plan-2-live-capture`. 24 commits since Plan 1.
+
+### What was built
+
+- **Live tailer daemon** (`apps/ingester/src/daemon/`): chokidar watcher + per-file debounce + delta ingest + Broadcaster pub/sub + HTTP server on `localhost:9939` (`/status`, `/hook`, `/events` SSE).
+- **Hook helper**: `infra/hooks/cca-ping.sh` — bash ping invoked by CC hooks. Install/uninstall via `scripts/install-hooks.sh` / `scripts/uninstall-hooks.sh` (jq-based settings.json patching, preserves existing hooks like rtk).
+- **launchd plist** (`infra/launchd/com.aporb.cca.ingester.plist`) + `scripts/install-daemon.sh` / `uninstall-daemon.sh`.
+- **`cca` CLI** (`apps/cli/`): seven subcommands — `status`, `sessions`, `replay`, `search`, `stats`, `tail`, `open`.
+- 54 tests across all workspaces — all green.
+- Bug fix during E2E: `rollupSessions` was clobbering hook-set `active` status on every re-rollup. Fixed with `CASE WHEN sessions.status = 'active' THEN 'active' ELSE EXCLUDED.status END` — now session liveness survives transcript ingest.
+
+### End-to-end verified
+
+Manual smoke with real `~/.claude`:
+- Daemon boots cleanly, `/status` reports `{ok:true, uptimeSec:3, subscribers:1}`.
+- `pnpm cca status` → **300,156 events / 519 sessions / 2 active sessions**.
+- `pnpm cca sessions --limit 3` → pretty-printed rows with status dots, durations, costs, first-prompt previews.
+- `pnpm cca search "postgres migration"` → ranked matches with highlighted snippets via `ts_headline`.
+- `pnpm cca stats --since 30d` → three aggregate tables (top models by cost, top projects, top tools with error rates).
+- `pnpm cca tail` → SSE heartbeat on connect, status events streamed when hooks fire.
+
+### Daemon ops quick-ref
+
+- Manual start:  `pnpm --filter @cca/ingester exec tsx src/cli.ts daemon`
+- launchd start: `launchctl load ~/Library/LaunchAgents/com.aporb.cca.ingester.plist` (see macOS caveat below)
+- launchd stop:  `launchctl unload ~/Library/LaunchAgents/com.aporb.cca.ingester.plist`
+- Status:        `curl -s http://localhost:9939/status | jq .`
+- Tail logs:     `tail -f ~/Library/Logs/cca/daemon.log`
+
+### New known issues
+
+5. **macOS launchd is blocked by Full Disk Access protection.** The project lives under `~/Documents/`, which macOS guards: when launchd invokes `scripts/run-daemon.sh`, the OS returns `Operation not permitted` before the script can `cd` into the working directory. Two workarounds: (a) grant Full Disk Access to `/bin/bash` (or `/opt/homebrew/bin/pnpm`) via System Settings > Privacy & Security > Full Disk Access; or (b) run the daemon manually in a terminal when needed (`pnpm --filter @cca/ingester exec tsx src/cli.ts daemon`). Option (b) is fine for a dev tool; most users keep a terminal running anyway.
+6. **Unicode-escape ingest errors (~0.4% of files)** persist from Plan 1 — still 12 files failing with `\u0000` inside JSON strings. Sanitize in parser as originally noted; not addressed here.
+7. **Root `pnpm cca` script** was fixed mid-plan (was using `pnpm run cca --` which Commander treats as end-of-options). Now uses `pnpm --filter @cca/cli exec tsx src/bin.ts` which forwards args cleanly.
+
+### What Plan 2 deliberately did NOT do
+
+- Fix the unicode-escape parser issue (deferred from Plan 1).
+- Resolve the path-decoding lossiness (also deferred).
+- Provide a web UI — that's Plan 3.
+
+### Next
+
+**Plan 3 (Web UI)** — Next.js 16 App Router on `localhost:3939`. Sessions list, session detail / replay, search, analytics dashboard, live activity indicator via the daemon's SSE. Consider a polish pass first to sanitize `\u0000` in the parser and switch `project_path` derivation to `cwd`.
+
