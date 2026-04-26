@@ -21,7 +21,7 @@ export async function listSessions(q: SessionsQuery) {
     conditions.push(lte(sessions.startedAt, q.since.end))
   }
   if (q.models?.length) {
-    conditions.push(sql`${sessions.modelsUsed} && ${sql.raw(`ARRAY[${q.models.map((m) => `'${m}'`).join(',')}]::text[]`)}`)
+    conditions.push(sql`${sessions.modelsUsed} && ${q.models}::text[]`)
   }
   const order = q.sortBy === 'cost' ? sql`${sessions.estimatedCostUsd} DESC NULLS LAST` : desc(sessions.startedAt)
   return db
@@ -53,7 +53,7 @@ export async function countSessions(q: Pick<SessionsQuery, 'project' | 'since' |
     conditions.push(lte(sessions.startedAt, q.since.end))
   }
   if (q.models?.length) {
-    conditions.push(sql`${sessions.modelsUsed} && ${sql.raw(`ARRAY[${q.models.map((m) => `'${m}'`).join(',')}]::text[]`)}`)
+    conditions.push(sql`${sessions.modelsUsed} && ${q.models}::text[]`)
   }
   const [row] = await db
     .select({ c: sql<number>`COUNT(*)::int` })
