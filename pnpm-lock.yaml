@@ -157,6 +157,9 @@ importers:
       tailwindcss:
         specifier: 3.4.17
         version: 3.4.17
+      vitest:
+        specifier: 2.1.8
+        version: 2.1.8(@types/node@22.10.0)
 
   packages/core: {}
 
