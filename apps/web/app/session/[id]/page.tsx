@@ -1,83 +1,133 @@
-import { notFound } from 'next/navigation'
-import Link from 'next/link'
-import { getSessionEvents, getSessionMeta, getSessionToolCalls } from '@/lib/queries/session'
+import {
+  getSessionMeta, getSessionEvents, getSessionToolCalls,
+  getSessionStats, getSessionTopTools, getSessionFilesTouched, getSessionFirstPrompts,
+} from '@/lib/queries/session'
+import { Badge } from '@/components/ui/badge'
 import { EventRow } from '@/components/EventRow'
 import { ToolCallDetails } from '@/components/ToolCallDetails'
-import { Badge } from '@/components/ui/badge'
+import { StatsStrip } from '@/components/session/StatsStrip'
+import { TopToolsPanel } from '@/components/session/TopToolsPanel'
+import { FilesTouchedPanel } from '@/components/session/FilesTouchedPanel'
+import { CostSplitPanel } from '@/components/session/CostSplitPanel'
+import { FirstPromptsStrip } from '@/components/session/FirstPromptsStrip'
+import { CollapsibleReplay } from '@/components/session/CollapsibleReplay'
+import { notFound } from 'next/navigation'
+import Link from 'next/link'
 
-interface PageProps {
-  params: Promise<{ id: string }>
-  searchParams: Promise<{ raw?: string }>
+function modelChipClass(model: string): string {
+  if (model.includes('opus')) return 'border-[hsl(var(--model-opus))] text-[hsl(var(--model-opus))]'
+  if (model.includes('sonnet')) return 'border-[hsl(var(--model-sonnet))] text-[hsl(var(--model-sonnet))]'
+  if (model.includes('haiku')) return 'border-[hsl(var(--model-haiku))] text-[hsl(var(--model-haiku))]'
+  return ''
 }
 
-export default async function SessionPage({ params, searchParams }: PageProps) {
+function shortProject(p: string | null): string { return p ? p.replace(/^\/Users\/[^/]+\//, '~/') : '(none)' }
+
+export default async function SessionPage({ params, searchParams }: {
+  params: Promise<{ id: string }>; searchParams: Promise<{ raw?: string; replay?: string }>
+}) {
   const { id } = await params
   const sp = await searchParams
-  const isRaw = sp.raw === '1' || sp.raw === 'true'
-  const [meta, evs, tools] = await Promise.all([
-    getSessionMeta(id),
+  const raw = sp.raw === '1'
+  const replayOpen = sp.replay === '1'
+
+  const meta = await getSessionMeta(id)
+  if (!meta) notFound()
+
+  const [stats, topTools, files, firstPrompts, events, toolCalls] = await Promise.all([
+    getSessionStats(id),
+    getSessionTopTools(id, 5),
+    getSessionFilesTouched(id, 5),
+    getSessionFirstPrompts(id, 3),
     getSessionEvents(id),
     getSessionToolCalls(id),
   ])
-  if (!meta) notFound()
-  const toolsByUuid = new Map(tools.map((t) => [t.uuid, t]))
+
+  const totalCost = stats.costByModel.reduce((s, r) => s + r.cost, 0)
+  const toolErrorCount = topTools.reduce((s, r) => s + r.errors, 0)
+  const toolsByUuid = new Map(toolCalls.map((t) => [t.uuid, t]))
+
+  // build toggle hrefs that preserve the other param
+  const rawHref = `?${new URLSearchParams({ ...(raw ? {} : { raw: '1' }), ...(replayOpen ? { replay: '1' } : {}) }).toString()}`
 
   return (
-    <main>
-      <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">← sessions</Link>
-      <header className="mt-4 mb-6 flex items-start justify-between gap-6 flex-wrap">
-        <div>
-          <h1 className="text-xl font-semibold">{meta.sessionId.slice(0, 8)}</h1>
-          <p className="text-sm text-muted-foreground mt-1">{meta.projectPath ?? '(no project)'}</p>
-          {meta.firstUserPrompt && (
-            <p className="text-sm mt-2 max-w-2xl">{meta.firstUserPrompt.replace(/\s+/g, ' ').slice(0, 200)}</p>
-          )}
-        </div>
-        <div className="flex gap-2 flex-wrap text-xs items-center">
-          {meta.status === 'active' ? <Badge variant="success">active</Badge> : <Badge variant="outline">ended</Badge>}
-          <Badge variant="outline">{meta.messageCount ?? 0} msgs</Badge>
-          <Badge variant="outline">{meta.toolCallCount ?? 0} tools</Badge>
-          {meta.durationSec ? <Badge variant="outline">{Math.round(meta.durationSec / 60)}m</Badge> : null}
-          {meta.estimatedCostUsd ? <Badge variant="outline">${Number(meta.estimatedCostUsd).toFixed(2)}</Badge> : null}
-          <Link
-            href={isRaw ? `/session/${id}` : `/session/${id}?raw=1`}
-            className="text-xs underline underline-offset-4 text-muted-foreground hover:text-foreground ml-2"
-          >
-            {isRaw ? 'hide secrets' : 'show raw'}
+    <div className="space-y-4">
+      <div className="text-xs text-muted-foreground">
+        <Link href="/sessions" className="hover:underline">/sessions</Link> / {id.slice(0, 8)}…
+      </div>
+      <div>
+        <h1 className="text-xl font-bold">
+          {shortProject(meta.projectPath)} · {new Date(meta.startedAt!).toLocaleString()}
+          {meta.endedAt && ` → ${new Date(meta.endedAt).toLocaleString()}`}
+          {meta.durationSec ? ` (${Math.round(meta.durationSec / 60)}m)` : ''}
+        </h1>
+        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+          {(meta.modelsUsed ?? []).map((m: string) => (
+            <Badge key={m} variant="outline" className={modelChipClass(m)}>
+              {m.replace(/^claude-/, '').replace(/-\d+$/, '')}
+            </Badge>
+          ))}
+          {meta.gitBranch && <span>· {meta.gitBranch}</span>}
+          {meta.ccVersion && <span>· cca-v{meta.ccVersion}</span>}
+          <Link href={rawHref || '?'} className="ml-auto hover:underline">
+            {raw ? 'redact' : '?raw=1'}
           </Link>
         </div>
-      </header>
-
-      <div className="border rounded-md divide-y">
-        {evs.map((e) => (
-          <div key={e.uuid}>
-            <EventRow
-              event={{
-                uuid: e.uuid,
-                type: e.type,
-                subtype: e.subtype,
-                timestamp: e.timestamp,
-                isSidechain: e.isSidechain,
-                payload: e.payload,
-              }}
-              raw={isRaw}
-            />
-            {toolsByUuid.has(e.uuid) && (
-              <ToolCallDetails
-                call={{
-                  uuid: e.uuid,
-                  toolName: toolsByUuid.get(e.uuid)!.toolName,
-                  input: toolsByUuid.get(e.uuid)!.input,
-                  result: toolsByUuid.get(e.uuid)!.result,
-                  durationMs: toolsByUuid.get(e.uuid)!.durationMs,
-                  isError: toolsByUuid.get(e.uuid)!.isError,
-                }}
-                raw={isRaw}
-              />
-            )}
-          </div>
-        ))}
       </div>
-    </main>
+
+      <StatsStrip
+        cost={totalCost}
+        messages={meta.messageCount ?? 0}
+        toolCalls={meta.toolCallCount ?? 0}
+        toolErrors={toolErrorCount}
+        cacheHitPct={stats.cacheHitPct}
+        subagents={meta.subagentCount ?? 0}
+      />
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <TopToolsPanel rows={topTools} />
+        <FilesTouchedPanel data={files} />
+        <CostSplitPanel
+          costByModel={stats.costByModel}
+          inputTokens={stats.inputTokens}
+          outputTokens={stats.outputTokens}
+          cacheReadTokens={stats.cacheReadTokens}
+        />
+      </div>
+
+      <FirstPromptsStrip rows={firstPrompts} />
+
+      <CollapsibleReplay
+        initialOpen={replayOpen}
+        count={{ messages: meta.messageCount ?? 0, toolCalls: meta.toolCallCount ?? 0 }}
+      >
+        <div className="border rounded-md divide-y">
+          {events.map((e) => (
+            <div key={e.uuid}>
+              <EventRow
+                event={{
+                  uuid: e.uuid, type: e.type, subtype: e.subtype,
+                  timestamp: e.timestamp, isSidechain: e.isSidechain, payload: e.payload,
+                }}
+                raw={raw}
+              />
+              {toolsByUuid.has(e.uuid) && (
+                <ToolCallDetails
+                  call={{
+                    uuid: e.uuid,
+                    toolName: toolsByUuid.get(e.uuid)!.toolName,
+                    input: toolsByUuid.get(e.uuid)!.input,
+                    result: toolsByUuid.get(e.uuid)!.result,
+                    durationMs: toolsByUuid.get(e.uuid)!.durationMs,
+                    isError: toolsByUuid.get(e.uuid)!.isError,
+                  }}
+                  raw={raw}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      </CollapsibleReplay>
+    </div>
   )
 }
