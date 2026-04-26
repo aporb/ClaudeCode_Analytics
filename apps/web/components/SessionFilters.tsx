@@ -1,44 +1,65 @@
 'use client'
 
-import { useRouter, useSearchParams, usePathname } from 'next/navigation'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useState } from 'react'
 
-export function SessionFilters() {
+const KNOWN_MODELS = [
+  { value: 'claude-opus-4-7', label: 'Opus' },
+  { value: 'claude-sonnet-4-6', label: 'Sonnet' },
+  { value: 'claude-haiku-4-5-20251001', label: 'Haiku' },
+]
+
+export function SessionFilters({ initial }: { initial: { project: string; model: string; sort: string } }) {
   const router = useRouter()
-  const pathname = usePathname()
-  const params = useSearchParams()
+  const sp = useSearchParams()
+  const [project, setProject] = useState(initial.project)
+  const [models, setModels] = useState<string[]>(initial.model ? initial.model.split(',').filter(Boolean) : [])
+  const [sort, setSort] = useState<'recent' | 'cost'>(initial.sort === 'cost' ? 'cost' : 'recent')
 
-  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const form = new FormData(e.currentTarget)
-    const next = new URLSearchParams(params.toString())
-    for (const [key, value] of form.entries()) {
-      const s = String(value).trim()
-      if (s) next.set(key, s)
-      else next.delete(key)
-    }
-    router.push(`${pathname}?${next.toString()}`)
+  function apply() {
+    const next = new URLSearchParams(sp.toString())
+    if (project) next.set('project', project); else next.delete('project')
+    if (models.length) next.set('model', models.join(',')); else next.delete('model')
+    next.set('sort', sort)
+    next.delete('page')
+    router.push(`?${next.toString()}`)
   }
-
-  const onReset = () => router.push(pathname)
+  function reset() { router.push('?') }
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-wrap gap-3 mb-6 items-end">
-      <label className="flex flex-col gap-1">
-        <span className="text-xs text-muted-foreground">project contains</span>
-        <Input name="project" defaultValue={params.get('project') ?? ''} placeholder="e.g. ClaudeCode" className="w-64" />
+    <div className="flex flex-wrap gap-2 items-end border border-border rounded-md p-3">
+      <label className="text-xs">
+        <div className="text-muted-foreground">Project</div>
+        <input type="text" value={project} onChange={(e) => setProject(e.target.value)}
+          placeholder="substring match"
+          className="px-2 py-1 rounded border border-border bg-background text-sm w-48" />
       </label>
-      <label className="flex flex-col gap-1">
-        <span className="text-xs text-muted-foreground">since</span>
-        <Input name="since" defaultValue={params.get('since') ?? ''} placeholder="7d, 24h, 2026-04-01" className="w-48" />
-      </label>
-      <label className="flex flex-col gap-1">
-        <span className="text-xs text-muted-foreground">model</span>
-        <Input name="model" defaultValue={params.get('model') ?? ''} placeholder="claude-sonnet-4-6" className="w-48" />
-      </label>
-      <Button type="submit">Apply</Button>
-      <Button type="button" variant="ghost" onClick={onReset}>Reset</Button>
-    </form>
+      <div className="text-xs">
+        <div className="text-muted-foreground">Models</div>
+        <div className="flex gap-1">
+          {KNOWN_MODELS.map((m) => {
+            const on = models.includes(m.value)
+            return (
+              <button key={m.value} type="button"
+                onClick={() => setModels(on ? models.filter((x) => x !== m.value) : [...models, m.value])}
+                className={`px-2 py-1 rounded text-xs border ${on ? 'border-foreground bg-muted' : 'border-border opacity-70'}`}>
+                {m.label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+      <div className="text-xs">
+        <div className="text-muted-foreground">Sort</div>
+        <button type="button" onClick={() => setSort(sort === 'recent' ? 'cost' : 'recent')}
+          className="px-2 py-1 rounded text-xs border border-border">
+          {sort === 'recent' ? 'Most recent' : 'Highest cost'}
+        </button>
+      </div>
+      <button type="button" onClick={apply}
+        className="ml-auto px-3 py-1.5 rounded border border-border text-sm hover:bg-muted/50">Apply</button>
+      <button type="button" onClick={reset}
+        className="px-3 py-1.5 rounded text-sm hover:bg-muted/50">Reset</button>
+    </div>
   )
 }
