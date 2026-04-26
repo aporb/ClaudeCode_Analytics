@@ -9,3 +9,6 @@ coverage/
 .remember/
 scripts/run-daemon.sh
 .next/
+
+# Visual brainstorming companion artifacts
+.superpowers/
