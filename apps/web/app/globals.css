@@ -21,6 +21,9 @@
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
     --ring: 240 10% 3.9%;
+    --model-opus: 265 90% 76%;
+    --model-sonnet: 142 70% 45%;
+    --model-haiku: 217 91% 60%;
   }
   .dark {
     --background: 240 10% 3.9%;
@@ -40,6 +43,9 @@
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
     --ring: 240 4.9% 83.9%;
+    --model-opus: 265 90% 76%;
+    --model-sonnet: 142 70% 50%;
+    --model-haiku: 217 91% 65%;
   }
 }
 
