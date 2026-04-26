@@ -61,6 +61,8 @@ export function TimePicker({ value }: { value: string | undefined }) {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-haspopup="listbox"
         className="text-sm px-3 py-1.5 rounded-md border border-border hover:bg-muted/50"
       >
         {labelFor(value)} ▾
