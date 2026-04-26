@@ -1,3 +1,4 @@
+import dayjs from 'dayjs'
 import { describe, expect, it } from 'vitest'
 import { parseSince, resolveSince } from './since'
 
@@ -16,6 +17,15 @@ describe('parseSince', () => {
     expect(got).not.toBeNull()
     expect(got!.getHours()).toBe(0)
     expect(got!.getMinutes()).toBe(0)
+  })
+
+  it('today is local midnight regardless of host timezone', () => {
+    // Timezone-agnostic: assert against dayjs.startOf('day') directly so the
+    // test passes anywhere, and confirm 'today' is never in the future.
+    const got = parseSince('today', NOW)
+    expect(got).not.toBeNull()
+    expect(got!.getTime()).toBe(dayjs(NOW).startOf('day').valueOf())
+    expect(got!.getTime()).toBeLessThanOrEqual(NOW.getTime())
   })
 
   it('parses the all token as null sentinel', () => {
@@ -66,5 +76,18 @@ describe('resolveSince', () => {
     const r = resolveSince('garbage', NOW)
     expect(r.start.toISOString()).toBe('2026-04-19T13:00:00.000Z')
     expect(r.label).toBe('Last 7d')
+  })
+
+  it('derives label for arbitrary relative-unit expressions (14d)', () => {
+    const r = resolveSince('14d', NOW)
+    expect(r.start.toISOString()).toBe('2026-04-12T13:00:00.000Z')
+    expect(r.end.toISOString()).toBe(NOW.toISOString())
+    expect(r.label).toBe('Last 14d')
+  })
+
+  it('derives label for arbitrary relative-unit expressions (2w)', () => {
+    const r = resolveSince('2w', NOW)
+    expect(r.start.toISOString()).toBe('2026-04-12T13:00:00.000Z')
+    expect(r.label).toBe('Last 2w')
   })
 })

@@ -12,6 +12,7 @@ export interface Since {
 export function parseSince(expr: string, now: Date = new Date()): Date | null {
   if (!expr) return null
   if (expr === 'all') return null
+  // 'today' = local midnight (user's timezone), not UTC
   if (expr === 'today') return dayjs(now).startOf('day').toDate()
   const m = REL.exec(expr)
   if (m) {
@@ -46,7 +47,15 @@ export function resolveSince(expr: string | undefined, now: Date = new Date()): 
   if (e === 'all') {
     return { start: new Date(0), end: now, label: 'All time' }
   }
-  const start = parseSince(e, now) ?? parseSince(DEFAULT_EXPR, now)!
-  const label = RELATIVE_LABELS[e] ?? RELATIVE_LABELS[DEFAULT_EXPR] ?? `Last ${DEFAULT_EXPR}`
-  return { start, end: now, label }
+  const parsed = parseSince(e, now)
+  if (parsed) {
+    // Prefer the named label; otherwise derive 'Last <expr>' for arbitrary
+    // relative units (e.g. '14d', '2w'). Only the genuinely-invalid path
+    // below falls back to the default label.
+    const label =
+      RELATIVE_LABELS[e] ?? (REL.test(e) ? `Last ${e}` : `Last ${DEFAULT_EXPR}`)
+    return { start: parsed, end: now, label }
+  }
+  const start = parseSince(DEFAULT_EXPR, now)!
+  return { start, end: now, label: RELATIVE_LABELS[DEFAULT_EXPR] ?? `Last ${DEFAULT_EXPR}` }
 }

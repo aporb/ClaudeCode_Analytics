@@ -5,7 +5,6 @@ export default defineConfig({
   test: {
     environment: 'node',
     fileParallelism: false,
-    setupFiles: [],
   },
   resolve: {
     alias: {
