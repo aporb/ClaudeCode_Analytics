@@ -140,3 +140,34 @@ Branch: `feat/plan-3-web-ui`. 16 tasks.
 
 System is feature-complete per the spec. Optional future: AI-assisted review ("summarize this session"), exports with redaction, multi-machine sync.
 
+---
+
+## 2026-04-26 — Dashboard redesign complete
+
+Branch: `feat/dashboard-redesign`. 20 commits.
+
+### What was built
+
+- New IA: `/` is now a **cost command center**; sessions list moved to `/sessions`; `/stats` renamed **Behavior** in nav.
+- **Global time picker** in nav (Today / 7d / 30d / 90d / All / Custom). URL + cookie persistence; default 7d. Custom popover takes ISO start+end and writes `?since=YYYY-MM-DD..YYYY-MM-DD`.
+- Home page composition: 5-cell KPI strip (today/window/cache hit/top model/active) · stacked-area spend by model · rule-based briefing card · top-cost sessions · cost distribution P50/P95/P99 · cache hit trend · 24×7 active-hours heatmap (clamped to ≥30d).
+- Session detail leads with **outcomes summary** (6-cell stat strip · top tools w/ error chip · files touched · cost split by model · first prompts) above a **collapsible replay** timeline. `?raw=1` and `?replay=1` toggles are orthogonal.
+- Behavior page: tool error rate trend · prompt→response latency P50/P95 (sidechain excluded) · subagent depth histogram · token velocity scatter · cache hit by model.
+- New per-route query modules in `apps/web/lib/queries/{cost,sessions,session,search,behavior}.ts`. Old monolithic `lib/queries.ts` removed.
+- New `apps/web/lib/briefing.ts` rule engine (no LLM call).
+- Three model color tokens in `globals.css` (`--model-opus`, `--model-sonnet`, `--model-haiku`) so chips/legends/charts agree everywhere.
+- `apps/web/lib/since.ts` extended to support `today`, `all`, ISO-pair, plus `resolveSince() → {start, end, label}` helper used by every page.
+
+### Test count and verification
+
+- 58 tests across all workspaces (was 54 in Plan 2; web slice grew from 0 → 37: since/timeplugger/briefing/cost/session/behavior).
+- Full typecheck clean across all six workspaces.
+- E2E smoke verified all five routes return 200 against the live database; the model-filter URL params on `/sessions` and `/search` work correctly (a regression in the array binding pattern was caught and fixed during the E2E pass).
+
+### What this redesign deliberately did NOT do
+
+- No DB schema changes, no new mat-views.
+- No auth, sharing, or per-user breakdowns (designed-as-if-org but single-user in v1).
+- No settings page, no annotations, no exports.
+- No pixel-snapshot tests (Vitest + RTL + real DB only).
+

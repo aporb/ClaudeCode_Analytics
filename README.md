@@ -174,14 +174,15 @@ pnpm cca open                # open the web UI in your default browser
 
 ## Web UI
 
-`http://localhost:3939` — four views:
+`http://localhost:3939` — five views with a global time picker in the nav:
 
-- `/` — sessions list with filters (project / since / model) and pagination.
-- `/session/<uuid>` — event timeline with tool-call inspector; `?raw=1` shows unredacted content.
-- `/search?q=...` — full-text search with highlighted snippets.
-- `/stats` — tokens over time (line), top tools (bar), cost by project (bar), activity heatmap.
+- `/` — **Cost command center**: KPI strip (today/window/cache hit/top model/active), stacked-area spend by model, rule-based briefing card, top-cost sessions, cost distribution P50/P95/P99, cache hit trend, hour×day-of-week heatmap.
+- `/sessions` — paginated sessions list with project/model filters and recent/cost sort toggle.
+- `/session/<uuid>` — outcomes summary (cost, tools, files touched, cost split by model, first prompts) above a collapsible replay; `?raw=1` shows unredacted content, `?replay=1` expands the timeline.
+- `/search?q=...` — full-text search with project/model/role chip filters, cost dot per result, and pagination.
+- `/stats` — **Behavior**: tool error rate trend, prompt→response latency P50/P95, subagent depth histogram, token velocity, cache hit by model.
 
-The header shows a live-activity indicator driven by the daemon's SSE stream at `/events`.
+The header shows a live-activity indicator driven by the daemon's SSE stream (`http://localhost:9939/events`).
 
 ## Tests
 
