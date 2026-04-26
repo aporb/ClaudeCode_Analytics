@@ -3,6 +3,11 @@ import { getDb } from '../db'
 import { sessions } from '@cca/db/schema'
 import { and, desc, gte, ilike, lte, sql } from 'drizzle-orm'
 
+/** Build a Postgres ARRAY[…]::text[] SQL chunk from a JS string array. */
+function pgTextArray(values: string[]) {
+  return sql`ARRAY[${sql.join(values.map((v) => sql`${v}`), sql`, `)}]::text[]`
+}
+
 export interface SessionsQuery {
   project?: string
   since?: { start: Date; end: Date }
@@ -21,7 +26,7 @@ export async function listSessions(q: SessionsQuery) {
     conditions.push(lte(sessions.startedAt, q.since.end))
   }
   if (q.models?.length) {
-    conditions.push(sql`${sessions.modelsUsed} && ${q.models}::text[]`)
+    conditions.push(sql`${sessions.modelsUsed} && ${pgTextArray(q.models)}`)
   }
   const order = q.sortBy === 'cost' ? sql`${sessions.estimatedCostUsd} DESC NULLS LAST` : desc(sessions.startedAt)
   return db
@@ -53,7 +58,7 @@ export async function countSessions(q: Pick<SessionsQuery, 'project' | 'since' |
     conditions.push(lte(sessions.startedAt, q.since.end))
   }
   if (q.models?.length) {
-    conditions.push(sql`${sessions.modelsUsed} && ${q.models}::text[]`)
+    conditions.push(sql`${sessions.modelsUsed} && ${pgTextArray(q.models)}`)
   }
   const [row] = await db
     .select({ c: sql<number>`COUNT(*)::int` })

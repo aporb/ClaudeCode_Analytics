@@ -2,6 +2,11 @@ import 'server-only'
 import { getDb } from '../db'
 import { sql } from 'drizzle-orm'
 
+/** Build a Postgres ARRAY[…]::text[] SQL chunk from a JS string array. */
+function pgTextArray(values: string[]) {
+  return sql`ARRAY[${sql.join(values.map((v) => sql`${v}`), sql`, `)}]::text[]`
+}
+
 export interface SearchQuery {
   q: string
   project?: string
@@ -33,7 +38,7 @@ export async function ftsSearch(args: SearchQuery) {
       ${args.role ? sql`AND m.role = ${args.role}` : sql``}
       ${args.project ? sql`AND s.project_path ILIKE ${'%' + args.project + '%'}` : sql``}
       ${args.since ? sql`AND m.timestamp >= ${args.since.start} AND m.timestamp <= ${args.since.end}` : sql``}
-      ${args.models?.length ? sql`AND m.model = ANY(${args.models})` : sql``}
+      ${args.models?.length ? sql`AND m.model = ANY(${pgTextArray(args.models)})` : sql``}
     ORDER BY ts_rank(m.text_tsv, plainto_tsquery('english', ${args.q})) DESC, m.timestamp DESC
     LIMIT ${args.limit ?? 50}
     OFFSET ${args.offset ?? 0}
@@ -61,7 +66,7 @@ export async function countSearchResults(args: Omit<SearchQuery, 'limit' | 'offs
       ${args.role ? sql`AND m.role = ${args.role}` : sql``}
       ${args.project ? sql`AND s.project_path ILIKE ${'%' + args.project + '%'}` : sql``}
       ${args.since ? sql`AND m.timestamp >= ${args.since.start} AND m.timestamp <= ${args.since.end}` : sql``}
-      ${args.models?.length ? sql`AND m.model = ANY(${args.models})` : sql``}
+      ${args.models?.length ? sql`AND m.model = ANY(${pgTextArray(args.models)})` : sql``}
   `)) as unknown as Array<{ c: string }>
   return Number(rows[0]?.c ?? 0)
 }
