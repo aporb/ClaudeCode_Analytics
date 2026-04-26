@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { getSessionEvents, getSessionMeta, getSessionToolCalls } from '@/lib/queries'
+import { getSessionEvents, getSessionMeta, getSessionToolCalls } from '@/lib/queries/session'
 import { EventRow } from '@/components/EventRow'
 import { ToolCallDetails } from '@/components/ToolCallDetails'
 import { Badge } from '@/components/ui/badge'

@@ -1,4 +1,4 @@
-import { listSessions } from '@/lib/queries'
+import { listSessions } from '@/lib/queries/sessions'
 import { SessionsTable } from '@/components/SessionsTable'
 import { SessionFilters } from '@/components/SessionFilters'
 import { parseSince } from '@/lib/since'
@@ -12,14 +12,15 @@ const PAGE_SIZE = 50
 export default async function HomePage({ searchParams }: PageProps) {
   const sp = await searchParams
   const page = Number(sp.page ?? '1')
-  const since = sp.since ? parseSince(sp.since) ?? undefined : undefined
+  const since = sp.since ? parseSince(sp.since) : null
+  const window = since ? { start: since, end: new Date() } : undefined
   const query: Parameters<typeof listSessions>[0] = {
     limit: PAGE_SIZE,
     offset: (page - 1) * PAGE_SIZE,
   }
   if (sp.project) query.project = sp.project
-  if (since) query.since = since
-  if (sp.model) query.model = sp.model
+  if (window) query.since = window
+  if (sp.model) query.models = [sp.model]
   const rows = await listSessions(query)
 
   const qs = (p: number) => {
