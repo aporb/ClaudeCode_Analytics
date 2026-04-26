@@ -1,53 +1,68 @@
-import { listSessions } from '@/lib/queries/sessions'
-import { SessionsTable } from '@/components/SessionsTable'
-import { SessionFilters } from '@/components/SessionFilters'
-import { parseSince } from '@/lib/since'
+import { resolveSince } from '@/lib/since'
+import {
+  getCostKpis, getSpendStackedByModel, getTopCostSessions,
+  getCostDistribution, getCacheHitTrend, getActiveHoursHeatmap,
+} from '@/lib/queries/cost'
+import { computeBriefing } from '@/lib/briefing'
+import { KpiStrip } from '@/components/cost/KpiStrip'
+import { BriefingCard } from '@/components/cost/BriefingCard'
+import { TopCostSessions } from '@/components/cost/TopCostSessions'
+import { CostDistributionCard } from '@/components/cost/CostDistributionCard'
+import { StackedAreaSpend } from '@/components/charts/StackedAreaSpend'
+import { CacheHitTrend } from '@/components/charts/CacheHitTrend'
+import { ActiveHoursHeatmap } from '@/components/charts/ActiveHoursHeatmap'
 
-interface PageProps {
-  searchParams: Promise<{ project?: string; since?: string; model?: string; page?: string }>
-}
-
-const PAGE_SIZE = 50
-
-export default async function HomePage({ searchParams }: PageProps) {
+export default async function CostHome({ searchParams }: { searchParams: Promise<{ since?: string }> }) {
   const sp = await searchParams
-  const page = Number(sp.page ?? '1')
-  const since = sp.since ? parseSince(sp.since) : null
-  const window = since ? { start: since, end: new Date() } : undefined
-  const query: Parameters<typeof listSessions>[0] = {
-    limit: PAGE_SIZE,
-    offset: (page - 1) * PAGE_SIZE,
-  }
-  if (sp.project) query.project = sp.project
-  if (window) query.since = window
-  if (sp.model) query.models = [sp.model]
-  const rows = await listSessions(query)
+  const window = resolveSince(sp.since)
+  const [kpis, spend, top, dist, cache, heatmap] = await Promise.all([
+    getCostKpis(window),
+    getSpendStackedByModel(window),
+    getTopCostSessions(window, 5),
+    getCostDistribution(window),
+    getCacheHitTrend(window),
+    getActiveHoursHeatmap(window),
+  ])
 
-  const qs = (p: number) => {
-    const params = new URLSearchParams()
-    if (sp.project) params.set('project', sp.project)
-    if (sp.since) params.set('since', sp.since)
-    if (sp.model) params.set('model', sp.model)
-    params.set('page', String(p))
-    return params.toString()
-  }
+  const yesterdayStart = new Date(); yesterdayStart.setHours(0, 0, 0, 0); yesterdayStart.setDate(yesterdayStart.getDate() - 1)
+  const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
+  const yesterdayKpis = await getCostKpis({ start: yesterdayStart, end: todayStart })
+
+  const topProjectRow = top[0]
+  const briefing = computeBriefing({
+    windowCost: kpis.windowCost,
+    windowCostPriorPeriod: kpis.windowCostPriorPeriod,
+    cacheHitPct: kpis.cacheHitPct,
+    cacheHitPctPrior: kpis.cacheHitPctPrior,
+    topProject: topProjectRow ? {
+      project: topProjectRow.projectPath?.replace(/^\/Users\/[^/]+\//, '~/') ?? '(none)',
+      model: topProjectRow.modelsUsed[0] ?? '',
+      cost: topProjectRow.cost,
+    } : null,
+    windowLabel: window.label,
+    isPartialDay: sp.since === 'today' && new Date().getHours() < 6,
+  })
 
   return (
-    <main>
-      <h1 className="text-xl font-semibold mb-6">Sessions</h1>
-      <SessionFilters />
-      <SessionsTable rows={rows} />
-      <div className="flex justify-between items-center mt-6 text-sm text-muted-foreground">
-        <span>page {page}</span>
-        <div className="flex gap-2">
-          {page > 1 && (
-            <a href={`?${qs(page - 1)}`} className="underline underline-offset-4">← prev</a>
-          )}
-          {rows.length === PAGE_SIZE && (
-            <a href={`?${qs(page + 1)}`} className="underline underline-offset-4">next →</a>
-          )}
+    <div className="space-y-4">
+      <KpiStrip kpis={kpis} todayPrior={yesterdayKpis.windowCost} />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 border border-border rounded-md p-4">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
+            Spend per day · stacked by model · {window.label}
+          </div>
+          <StackedAreaSpend rows={spend} />
         </div>
+        <BriefingCard briefing={briefing} />
       </div>
-    </main>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2"><TopCostSessions rows={top} /></div>
+        <CostDistributionCard distribution={dist} />
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <CacheHitTrend rows={cache} />
+        <ActiveHoursHeatmap data={heatmap} />
+      </div>
+    </div>
   )
 }
