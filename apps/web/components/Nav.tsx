@@ -2,6 +2,9 @@ import Link from 'next/link'
 import { cookies } from 'next/headers'
 import { TimePicker } from './TimePicker'
 import { LiveIndicator } from './LiveIndicator'
+import { HostFilter } from './nav/HostFilter'
+import { parseHosts } from '@/lib/hosts'
+import { getAllHosts } from '@/lib/queries/hosts'
 
 const items = [
   { href: '/', label: 'Cost' },
@@ -14,6 +17,15 @@ export async function Nav({ since }: { since: string | undefined }) {
   const cookieStore = await cookies()
   const cookieSince = cookieStore.get('cca-since')?.value
   const effective = since ?? cookieSince
+  const cookieHosts = cookieStore.get('cca-hosts')?.value ?? null
+  let allHosts: string[] = []
+  try {
+    allHosts = await getAllHosts()
+  } catch {
+    // DB unavailable (e.g. SSG / preview without env) — degrade silently.
+    allHosts = ['local']
+  }
+  const currentHosts = parseHosts({ searchParams: {}, cookieValue: cookieHosts })
   return (
     <header className="border-b">
       <div className="max-w-7xl mx-auto flex items-center gap-6 px-6 h-14">
@@ -25,6 +37,7 @@ export async function Nav({ since }: { since: string | undefined }) {
             </Link>
           ))}
         </nav>
+        <HostFilter allHosts={allHosts} current={currentHosts} />
         <TimePicker value={effective} />
         <LiveIndicator />
       </div>
