@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, beforeAll, afterAll } from 'vitest'
+import postgres from 'postgres'
 import {
   getCostKpis,
   getSpendStackedByModel,
@@ -6,6 +7,7 @@ import {
   getCostDistribution,
   getCacheHitTrend,
   getActiveHoursHeatmap,
+  getTokenTotals,
 } from './cost'
 
 const SINCE = { start: new Date('2026-04-01T00:00:00Z'), end: new Date('2026-04-26T23:59:59Z') }
@@ -64,5 +66,87 @@ describe('cost queries', () => {
   it('getActiveHoursHeatmap returns 168 cells (24h x 7dow)', async () => {
     const heatmap = await getActiveHoursHeatmap(SINCE)
     expect(heatmap.cells).toHaveLength(7 * 24)
+  })
+})
+
+// Test data is isolated by a unique time window + dedicated test host names
+// so it doesn't collide with real ingested data. Mirrors the pattern in
+// hosts.test.ts: 2099 dates outside any real range, distinctive host names.
+const TH_A = '__th_a__'
+const TH_B = '__th_b__'
+const TH_WIN_START = new Date('2099-02-01T00:00:00Z')
+const TH_WIN_END = new Date('2099-02-28T23:59:59Z')
+const URL = process.env.CCA_DATABASE_URL
+
+describe('getTokenTotals', () => {
+  let sql: postgres.Sql
+
+  beforeAll(async () => {
+    if (!URL) throw new Error('CCA_DATABASE_URL is not set')
+    sql = postgres(URL, { max: 2, prepare: false })
+
+    await sql`DELETE FROM sessions WHERE host IN (${TH_A}, ${TH_B})`
+    // host A: 2 sessions in window
+    await sql`
+      INSERT INTO sessions (
+        session_id, host, started_at,
+        total_input_tokens, total_output_tokens, total_cache_creation, total_cache_read,
+        estimated_cost_usd
+      ) VALUES
+        ('th_a1', ${TH_A}, '2099-02-05T10:00:00Z', 1000, 500, 100, 200, 1.50),
+        ('th_a2', ${TH_A}, '2099-02-10T10:00:00Z', 2000, 700, 300, 400, 3.25)
+    `
+    // host B: 1 session in window
+    await sql`
+      INSERT INTO sessions (
+        session_id, host, started_at,
+        total_input_tokens, total_output_tokens, total_cache_creation, total_cache_read,
+        estimated_cost_usd
+      ) VALUES
+        ('th_b1', ${TH_B}, '2099-02-15T10:00:00Z', 500, 250, 50, 75, 0.90)
+    `
+  })
+
+  afterAll(async () => {
+    await sql`DELETE FROM sessions WHERE host IN (${TH_A}, ${TH_B})`
+    await sql.end()
+  })
+
+  it('sums across all hosts when hosts is null', async () => {
+    const t = await getTokenTotals({
+      sinceStart: TH_WIN_START,
+      sinceEnd: TH_WIN_END,
+      hosts: null,
+    })
+    expect(t.input).toBe(3500) // 1000 + 2000 + 500
+    expect(t.output).toBe(1450) // 500 + 700 + 250
+    expect(t.cacheCreation).toBe(450) // 100 + 300 + 50
+    expect(t.cacheRead).toBe(675) // 200 + 400 + 75
+    expect(t.total).toBe(3500 + 1450 + 450 + 675)
+  })
+
+  it('returns only host A totals when filtered to host A', async () => {
+    const t = await getTokenTotals({
+      sinceStart: TH_WIN_START,
+      sinceEnd: TH_WIN_END,
+      hosts: [TH_A],
+    })
+    expect(t.input).toBe(3000)
+    expect(t.output).toBe(1200)
+    expect(t.cacheCreation).toBe(400)
+    expect(t.cacheRead).toBe(600)
+    expect(t.total).toBe(3000 + 1200 + 400 + 600)
+  })
+
+  it('returns only host B totals when filtered to host B', async () => {
+    const t = await getTokenTotals({
+      sinceStart: TH_WIN_START,
+      sinceEnd: TH_WIN_END,
+      hosts: [TH_B],
+    })
+    expect(t.input).toBe(500)
+    expect(t.output).toBe(250)
+    expect(t.cacheCreation).toBe(50)
+    expect(t.cacheRead).toBe(75)
   })
 })

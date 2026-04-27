@@ -2,7 +2,60 @@ import 'server-only'
 import { getDb } from '../db'
 import { sql } from 'drizzle-orm'
 
+/** Build a Postgres ARRAY[…]::text[] SQL chunk from a JS string array.
+ *  Mirrors the working pattern from `apps/web/lib/queries/sessions.ts`
+ *  (see STATUS: "fix(web): serialize model filter arrays as Postgres ARRAY[…]::text[]"). */
+function pgTextArray(values: string[]) {
+  return sql`ARRAY[${sql.join(values.map((v) => sql`${v}`), sql`, `)}]::text[]`
+}
+
 export interface Window { start: Date; end: Date }
+
+export interface TokenTotals {
+  input: number
+  output: number
+  cacheCreation: number
+  cacheRead: number
+  total: number
+}
+
+/**
+ * Sum total tokens (input/output/cache create/cache read) across sessions in
+ * the given window, optionally filtered to a list of hosts. Used for the
+ * token headline on `/`.
+ *
+ * `hosts: null` means "all hosts" (no filter). An empty array is treated the
+ * same as null (no filter) — the UI never sends an explicit empty array, but
+ * we guard against it to avoid `host = ANY(ARRAY[]::text[])` which matches
+ * nothing.
+ */
+export async function getTokenTotals(opts: {
+  sinceStart: Date
+  sinceEnd: Date
+  hosts: string[] | null
+}): Promise<TokenTotals> {
+  const db = getDb()
+  const startTs = opts.sinceStart.toISOString()
+  const endTs = opts.sinceEnd.toISOString()
+  const hostFilter = opts.hosts && opts.hosts.length > 0
+    ? sql`AND host = ANY(${pgTextArray(opts.hosts)})`
+    : sql``
+  const rows = (await db.execute<{ input: string; output: string; cc: string; cr: string }>(sql`
+    SELECT
+      COALESCE(SUM(total_input_tokens), 0)::bigint    AS input,
+      COALESCE(SUM(total_output_tokens), 0)::bigint   AS output,
+      COALESCE(SUM(total_cache_creation), 0)::bigint  AS cc,
+      COALESCE(SUM(total_cache_read), 0)::bigint      AS cr
+    FROM sessions
+    WHERE started_at BETWEEN ${startTs}::timestamptz AND ${endTs}::timestamptz ${hostFilter}
+  `)) as unknown as Array<{ input: string; output: string; cc: string; cr: string }>
+  const r = rows[0] ?? { input: '0', output: '0', cc: '0', cr: '0' }
+  const input = Number(r.input)
+  const output = Number(r.output)
+  const cc = Number(r.cc)
+  const cr = Number(r.cr)
+  return { input, output, cacheCreation: cc, cacheRead: cr, total: input + output + cc + cr }
+}
 
 export interface CostKpis {
   todayCost: number

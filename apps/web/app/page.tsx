@@ -11,8 +11,9 @@ import { CostDistributionCard } from '@/components/cost/CostDistributionCard'
 import { StackedAreaSpend } from '@/components/charts/StackedAreaSpend'
 import { CacheHitTrend } from '@/components/charts/CacheHitTrend'
 import { ActiveHoursHeatmap } from '@/components/charts/ActiveHoursHeatmap'
+import { TokenHeadline } from '@/components/TokenHeadline'
 
-export default async function CostHome({ searchParams }: { searchParams: Promise<{ since?: string }> }) {
+export default async function CostHome({ searchParams }: { searchParams: Promise<{ since?: string; host?: string | string[] }> }) {
   const sp = await searchParams
   const window = resolveSince(sp.since)
   const [kpis, spend, top, dist, cache, heatmap] = await Promise.all([
@@ -45,6 +46,7 @@ export default async function CostHome({ searchParams }: { searchParams: Promise
 
   return (
     <div className="space-y-4">
+      <TokenHeadline searchParams={sp} />
       <KpiStrip kpis={kpis} todayPrior={yesterdayKpis.windowCost} />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 border border-border rounded-md p-4">
