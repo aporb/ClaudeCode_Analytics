@@ -8,7 +8,7 @@ You went to sleep around midnight EDT on 2026-04-26. The multi-host ingest build
 - **Draft PR:** https://github.com/aporb/ClaudeCode_Analytics/pull/1
 - **Tests:** 113 root + 66 web = 179 passing. `pnpm typecheck` clean across all 6 workspaces. `pnpm --filter @cca/web build` succeeds.
 - **Live data ingested:** hostinger (6,146 events / 44 sessions / $871) + picoclaw (3,803 events / 15 sessions / $941).
-- **launchd plist:** loaded (`launchctl list | grep com.aporb.cca.sync`). Next scheduled tick ~3h after each host's last sync.
+- **launchd plist:** loaded but **hits the same macOS FDA issue as the existing daemon plist** — see "Known issue" below. Manual `pnpm cca sync` works fine.
 - **DB snapshot:** `~/Library/Logs/cca/claude_code-pre-multi-host-20260426-225033.dump` (1.08 GB) — pre-migration safety net.
 - **Daemon autostart:** restored in `~/.zshrc`. Local daemon currently running.
 
@@ -27,6 +27,19 @@ In rough order of "most likely to surprise you":
 - Same for `picoclaw` — those sessions have `cwd=/home/amynporb/...`.
 - Run `pnpm cca sync --host hostinger` (without `--force`). It should say "not due" since we just pulled. Confirm the due-check works.
 - Check `~/Library/Logs/cca/sync.log` after the next scheduled tick (~08:30 EDT for hostinger if first sync was 05:27 UTC) — should be empty-pull / no-op.
+
+## Known issue: launchd FDA (same as the daemon)
+
+The plist fired on schedule at ~04:30 and ~07:30 EDT, but `~/Library/Logs/cca/sync.err.log` shows `Operation not permitted` — macOS Full Disk Access blocks `launchctl`-spawned processes from reading `~/Documents/`. Identical to the well-known daemon-plist issue documented in the README.
+
+**Workarounds (your call which):**
+
+1. **Grant FDA** to `/bin/bash` (or `/opt/homebrew/bin/pnpm`) via System Settings → Privacy & Security → Full Disk Access. One-time. After that, the 3h cycle runs unattended.
+2. **Manual sync** with `pnpm cca sync` whenever you want fresh remote data. I did a catch-up at 08:44 EDT; current state is fresh.
+
+**State after the catch-up sync at 08:44 EDT:**
+- hostinger: 6,751 events / 605 new since first pull / interval back to 3h.
+- picoclaw: 3,803 events / 0 new since first pull / **interval bumped to 6h** (`consecutive_empty_pulls=1`). This is the backoff state machine working as designed.
 
 ## Things you should know
 
