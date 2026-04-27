@@ -5,6 +5,7 @@ import { resolveSince } from '@/lib/since'
 import { parseHosts } from '@/lib/hosts'
 import { getHostStats, type HostStats } from '@/lib/queries/hosts'
 import { Card } from '@/components/ui/card'
+import { HostChip } from '@/components/HostChip'
 
 dayjs.extend(relativeTime)
 
@@ -14,29 +15,6 @@ const USD = new Intl.NumberFormat('en-US', {
   currency: 'USD',
   maximumFractionDigits: 2,
 })
-
-/** Stable hue for a host label (HSL hash). */
-function hostHue(host: string): number {
-  let h = 0
-  for (let i = 0; i < host.length; i++) h = (h * 31 + host.charCodeAt(i)) >>> 0
-  return h % 360
-}
-
-function HostChip({ host }: { host: string }) {
-  const hue = hostHue(host)
-  return (
-    <span
-      className="inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-mono"
-      style={{
-        borderColor: `hsl(${hue} 60% 45%)`,
-        color: `hsl(${hue} 60% 45%)`,
-        backgroundColor: `hsl(${hue} 60% 45% / 0.08)`,
-      }}
-    >
-      {host}
-    </span>
-  )
-}
 
 function SyncDot({ consecutiveErrors }: { consecutiveErrors: number }) {
   const color =

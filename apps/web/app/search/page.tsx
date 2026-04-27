@@ -1,16 +1,22 @@
+import { cookies } from 'next/headers'
 import { ftsSearch, countSearchResults } from '@/lib/queries/search'
 import { resolveSince } from '@/lib/since'
+import { parseHosts } from '@/lib/hosts'
 import { SearchForm } from '@/components/SearchForm'
+import { HostChip } from '@/components/HostChip'
 import Link from 'next/link'
 
 export default async function SearchPage({ searchParams }: {
-  searchParams: Promise<{ q?: string; project?: string; since?: string; model?: string; role?: string; page?: string }>
+  searchParams: Promise<{ q?: string; project?: string; since?: string; model?: string; role?: string; page?: string; host?: string | string[] }>
 }) {
   const sp = await searchParams
   const q = sp.q?.trim() ?? ''
   const window = resolveSince(sp.since)
   const role = sp.role === 'user' || sp.role === 'assistant' ? sp.role : undefined
   const models = sp.model ? sp.model.split(',').filter(Boolean) : undefined
+  const cookieStore = await cookies()
+  const cookieHosts = cookieStore.get('cca-hosts')?.value ?? null
+  const hosts = parseHosts({ searchParams: sp, cookieValue: cookieHosts })
   const page = Math.max(1, Number(sp.page ?? 1))
   const limit = 50
   const offset = (page - 1) * limit
@@ -20,6 +26,7 @@ export default async function SearchPage({ searchParams }: {
     ...(sp.project ? { project: sp.project } : {}),
     ...(sp.since ? { since: { start: window.start, end: window.end } } : {}),
     ...(models ? { models } : {}),
+    ...(hosts ? { hosts } : {}),
     ...(role ? { role } : {}),
     limit,
     offset,
@@ -43,9 +50,12 @@ export default async function SearchPage({ searchParams }: {
         {rows.map((r) => (
           <li key={r.uuid} className="border-b pb-3">
             <div className="flex items-baseline justify-between gap-4 mb-1 text-xs text-muted-foreground">
-              <span>
-                {new Date(r.timestamp).toISOString().slice(0, 19).replace('T', ' ')} · {r.role}
-                {r.cost !== null && <span className="ml-2">${r.cost.toFixed(2)}</span>}
+              <span className="flex items-center gap-2">
+                <HostChip host={r.host} />
+                <span>
+                  {new Date(r.timestamp).toISOString().slice(0, 19).replace('T', ' ')} · {r.role}
+                  {r.cost !== null && <span className="ml-2">${r.cost.toFixed(2)}</span>}
+                </span>
               </span>
               <Link
                 href={`/session/${r.sessionId}#${r.uuid}`}
@@ -75,8 +85,17 @@ export default async function SearchPage({ searchParams }: {
   )
 }
 
-function buildQs(sp: Record<string, string | undefined>, page: number): string {
-  const p = new URLSearchParams(Object.entries(sp).filter(([, v]) => v) as [string, string][])
+function buildQs(sp: Record<string, string | string[] | undefined>, page: number): string {
+  const entries: [string, string][] = []
+  for (const [k, v] of Object.entries(sp)) {
+    if (k === 'host') continue // cookie/global filter manages host param
+    if (Array.isArray(v)) {
+      if (v[0]) entries.push([k, v[0]])
+    } else if (v) {
+      entries.push([k, v])
+    }
+  }
+  const p = new URLSearchParams(entries)
   p.set('page', String(page))
   return p.toString()
 }

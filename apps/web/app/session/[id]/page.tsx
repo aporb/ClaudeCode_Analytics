@@ -3,6 +3,7 @@ import {
   getSessionStats, getSessionTopTools, getSessionFilesTouched, getSessionFirstPrompts,
 } from '@/lib/queries/session'
 import { Badge } from '@/components/ui/badge'
+import { HostChip } from '@/components/HostChip'
 import { EventRow } from '@/components/EventRow'
 import { ToolCallDetails } from '@/components/ToolCallDetails'
 import { StatsStrip } from '@/components/session/StatsStrip'
@@ -62,6 +63,7 @@ export default async function SessionPage({ params, searchParams }: {
           {meta.durationSec ? ` (${Math.round(meta.durationSec / 60)}m)` : ''}
         </h1>
         <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+          <HostChip host={meta.host} />
           {(meta.modelsUsed ?? []).map((m: string) => (
             <Badge key={m} variant="outline" className={modelChipClass(m)}>
               {m.replace(/^claude-/, '').replace(/-\d+$/, '')}

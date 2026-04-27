@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { HostChip } from '@/components/HostChip'
 
 interface Row {
   sessionId: string
@@ -11,6 +12,7 @@ interface Row {
   cost: string | null
   firstPrompt: string | null
   status: string | null
+  host: string
 }
 
 export function SessionsTable({ rows }: { rows: Row[] }) {
@@ -24,6 +26,7 @@ export function SessionsTable({ rows }: { rows: Row[] }) {
         <TableRow>
           <TableHead className="w-[20px]"></TableHead>
           <TableHead>when</TableHead>
+          <TableHead>host</TableHead>
           <TableHead>dur</TableHead>
           <TableHead className="text-right">msgs</TableHead>
           <TableHead className="text-right">tools</TableHead>
@@ -42,6 +45,9 @@ export function SessionsTable({ rows }: { rows: Row[] }) {
             </TableCell>
             <TableCell className="text-muted-foreground whitespace-nowrap">
               {r.startedAt ? new Date(r.startedAt).toISOString().slice(0, 16).replace('T', ' ') : '—'}
+            </TableCell>
+            <TableCell>
+              <HostChip host={r.host} />
             </TableCell>
             <TableCell className="whitespace-nowrap">
               {r.durationSec ? `${Math.round(r.durationSec / 60)}m` : '—'}
