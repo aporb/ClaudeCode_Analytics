@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { z } from 'zod'
 
 const HOST_REGEX = /^[a-z0-9][a-z0-9_-]*$/
@@ -40,6 +41,6 @@ export function parseRemotesConfig(raw: string): RemoteEntry[] {
 }
 
 export function loadRemotesConfig(path: string): RemoteEntry[] {
-  const raw = require('node:fs').readFileSync(path, 'utf8')
+  const raw = readFileSync(path, 'utf8')
   return parseRemotesConfig(raw)
 }
