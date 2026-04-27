@@ -38,7 +38,9 @@ Both are started automatically on first terminal open via snippets in `~/.zshrc`
 
 - macOS (this setup is macOS-specific because of the launchd/zshrc choices and `~/.claude` path).
 - Node 22+ and pnpm 9+ (`corepack enable && corepack prepare pnpm@latest --activate`).
-- Docker Desktop running with the existing Supabase container `supabase_db_mission-control-saas` exposing Postgres 17 on `localhost:54322`.
+- Postgres 17 reachable on `localhost:54322`. Two ways to get one:
+  - **Standalone (fresh clone):** `docker compose -f infra/docker/docker-compose.yml up -d` brings up a minimal Postgres 17 container named `cca-postgres`.
+  - **Existing Supabase container:** Use any Supabase Postgres 17 already running on `:54322`. The `claude_code` and `claude_code_test` databases will live alongside whatever else is there.
 - `.env.local` at the repo root. The defaults in `.env.example` work as-is for
   the standard Supabase docker setup — just copy and run:
 

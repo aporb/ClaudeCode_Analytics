@@ -1,0 +1,32 @@
+# Minimal standalone Postgres 17 for `cca`. Run from the repo root:
+#
+#   docker compose -f infra/docker/docker-compose.yml up -d
+#
+# Then create the two databases:
+#
+#   psql postgresql://postgres:postgres@localhost:54322/postgres -f infra/docker/create-db.sql
+#
+# This is intended for fresh clones / new contributors. If you already run
+# Supabase locally on :54322 (for an unrelated project), point CCA at that
+# container instead — the `claude_code` and `claude_code_test` databases will
+# coexist with whatever else lives there.
+services:
+  cca-postgres:
+    image: postgres:17
+    container_name: cca-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "54322:5432"
+    volumes:
+      - cca_postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  cca_postgres_data:
