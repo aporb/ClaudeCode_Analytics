@@ -8,6 +8,7 @@ coverage/
 .vitest/
 .remember/
 scripts/run-daemon.sh
+scripts/run-sync.sh
 .next/
 
 # Visual brainstorming companion artifacts
