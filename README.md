@@ -102,6 +102,8 @@ fi
 
 **Why dev mode for the web?** `next dev` tolerates code changes without a rebuild and recovers cleanly from errors. For a slightly faster cold start, run `pnpm --filter @cca/web build` once and swap the `dev` snippet to `start`.
 
+The multi-host sync uses a separate **launchd plist** (every 3h; see [Multi-host sync](#multi-host-sync)) instead of a `~/.zshrc` snippet — sync needs to fire on a fixed cadence whether or not a terminal is open. The same FDA caveat applies; manual `pnpm cca sync` from a terminal is the documented fallback.
+
 ## Daily operation
 
 ### Is it running?
@@ -150,6 +152,107 @@ nohup pnpm --filter @cca/web dev \
   >> ~/Library/Logs/cca/web.log 2>&1 &
 disown
 ```
+
+## Multi-host sync
+
+Pull Claude Code transcripts from other machines you SSH into and ingest them under the same dashboard. Each row is tagged with a `host` column; existing local data is labelled `local`. The web UI grows a host filter chip and a `/hosts` page; the rest of the views just gain a host badge.
+
+Sync is launchd-only — the existing `~/.zshrc` auto-start is unchanged.
+
+### Configuration: `cca.remotes.json`
+
+Create `cca.remotes.json` at the repo root (gitignored):
+
+```json
+[
+  { "host": "hostinger", "ssh": "ssh_hostinger", "claudeHome": "~/.claude" },
+  { "host": "picoclaw",  "ssh": "ssh_picoclaw",  "claudeHome": "~/.claude" }
+]
+```
+
+| Field | Purpose |
+|---|---|
+| `host` | Label stamped on every ingested row. Must match `^[a-z0-9][a-z0-9_-]*$` and cannot be `local` (reserved for the daemon). Unique across the registry. |
+| `ssh` | SSH alias from `~/.ssh/config`. |
+| `claudeHome` | Remote `~/.claude` path. Defaults to `~/.claude` if omitted (tilde expanded by `ssh` on the remote). |
+
+Validation runs on every `cca sync`. A malformed file exits non-zero before any rsync — `host_sync_state` is never touched.
+
+### CLI
+
+```bash
+pnpm cca sync                              # all due hosts (respects per-host backoff)
+pnpm cca sync --force                      # skip the due check, sync everyone now
+pnpm cca sync --host hostinger             # one host, still respects backoff
+pnpm cca sync --force --host hostinger     # one host, run now
+pnpm cca sync --reset-state hostinger      # delete the host's row in host_sync_state (data untouched)
+```
+
+First-time pull for a new remote:
+
+```bash
+# 1. Add the entry to cca.remotes.json
+# 2. Pull now and watch it ingest
+pnpm cca sync --force --host hostinger
+
+# 3. Confirm rows landed
+psql "$CCA_DATABASE_URL" -c "select host, count(*) from events group by host;"
+```
+
+### Scheduled cadence
+
+The sync job runs every **3 hours** via launchd. Inside each invocation, every host has its own backoff:
+
+- 3h is the floor.
+- Each empty pull (rsync exit 0, 0 files transferred) bumps the next interval: 3h → 6h → 12h (capped).
+- Any non-empty pull resets back to 3h and updates `last_had_data_at`.
+- Errors (rsync non-zero) increment `consecutive_errors` but do **not** affect the empty-pull backoff.
+
+State lives in the `host_sync_state` table; the launchd job always wakes at 3h and the runner decides per-host whether each is due.
+
+### Installing the launchd plist
+
+```bash
+./scripts/install-sync.sh     # writes ~/Library/LaunchAgents/com.aporb.cca.sync.plist + scripts/run-sync.sh
+./scripts/uninstall-sync.sh   # unloads, removes the plist + wrapper
+```
+
+Logs land at `~/Library/Logs/cca/sync.log` (one line per host per run).
+
+**FDA caveat (same as the daemon).** macOS Full Disk Access can block launchd-spawned processes from reading `~/Documents/`. If the scheduled run silently does nothing, run `pnpm cca sync` from a terminal — the interactive shell inherits FDA and always works. Granting FDA to the launchd executor is the long-term fix.
+
+### Removing a host
+
+Removing a line from `cca.remotes.json` stops new pulls but leaves history queryable under the old label. To fully purge a host (deliberately manual — there is no one-button purge):
+
+```bash
+# 1. Remove the entry from cca.remotes.json
+# 2. Drop the state row (no data deleted by this step)
+pnpm cca sync --reset-state hostinger
+
+# 3. Delete the host's data
+psql "$CCA_DATABASE_URL" <<'SQL'
+DELETE FROM events           WHERE host = 'hostinger';
+DELETE FROM sessions         WHERE host = 'hostinger';
+DELETE FROM messages         WHERE host = 'hostinger';
+DELETE FROM tool_calls       WHERE host = 'hostinger';
+DELETE FROM prompts_history  WHERE host = 'hostinger';
+DELETE FROM file_snapshots   WHERE host = 'hostinger';
+DELETE FROM shell_snapshots  WHERE host = 'hostinger';
+DELETE FROM todos            WHERE host = 'hostinger';
+SQL
+
+# 4. Remove the local mirror dir
+rm -rf .cca/remotes/hostinger
+```
+
+`--reset-state` is intentionally state-only — it never touches `events` rows or the mirror dir.
+
+### Troubleshooting
+
+- **Rsync failed.** Tail `~/Library/Logs/cca/sync.log`. Verify the SSH alias works in isolation: `ssh ssh_hostinger 'ls ~/.claude'`. Common causes are an unreachable host, a missing remote `~/.claude`, and a full local disk under `.cca/remotes/`.
+- **`consecutive_errors >= 3` banner in the UI.** At the 3h cadence that's at least nine hours of failed pulls — past the "transient" window. Run `pnpm cca sync --force --host <name>` from a terminal, read the log, and fix whatever's broken (SSH config, disk, credentials). The banner clears on the next successful pull.
+- **Scheduled run does nothing but manual works.** FDA — see the caveat above.
 
 ## Recovery: when things stop ingesting
 
