@@ -10,7 +10,7 @@ import {
 
 type Db = PostgresJsDatabase<typeof schema>
 
-export async function ingestHistory(db: Db, file: string | null): Promise<number> {
+export async function ingestHistory(db: Db, file: string | null, opts: { host: string }): Promise<number> {
   if (!file) return 0
   const batch: Array<typeof promptsHistory.$inferInsert> = []
   for await (const e of readHistory(file)) {
@@ -19,6 +19,7 @@ export async function ingestHistory(db: Db, file: string | null): Promise<number
       pastedContents: e.pastedContents as object,
       typedAt: e.typedAt,
       projectPath: e.projectPath,
+      host: opts.host,
     })
   }
   if (batch.length === 0) return 0
@@ -30,13 +31,14 @@ export async function ingestHistory(db: Db, file: string | null): Promise<number
   return res.length
 }
 
-export async function ingestTodos(db: Db, dir: string | null): Promise<number> {
+export async function ingestTodos(db: Db, dir: string | null, opts: { host: string }): Promise<number> {
   if (!dir) return 0
   const batch: Array<typeof todosTable.$inferInsert> = []
   for await (const t of readTodosDir(dir)) {
     batch.push({
       sessionId: t.sessionId, agentId: t.agentId,
       snapshotAt: t.snapshotAt, todos: t.todos as object,
+      host: opts.host,
     })
   }
   if (batch.length === 0) return 0
@@ -44,7 +46,7 @@ export async function ingestTodos(db: Db, dir: string | null): Promise<number> {
   return res.length
 }
 
-export async function ingestFileHistory(db: Db, dir: string | null): Promise<number> {
+export async function ingestFileHistory(db: Db, dir: string | null, opts: { host: string }): Promise<number> {
   if (!dir) return 0
   let count = 0
   const buf: Array<typeof fileSnapshots.$inferInsert> = []
@@ -58,6 +60,7 @@ export async function ingestFileHistory(db: Db, dir: string | null): Promise<num
     buf.push({
       sessionId: s.sessionId, filePath: s.filePath, version: s.version,
       snapshotAt: s.snapshotAt, content: s.content, sha256: s.sha256,
+      host: opts.host,
     })
     if (buf.length >= 200) await flush()
   }
@@ -65,11 +68,11 @@ export async function ingestFileHistory(db: Db, dir: string | null): Promise<num
   return count
 }
 
-export async function ingestShellSnapshots(db: Db, dir: string | null): Promise<number> {
+export async function ingestShellSnapshots(db: Db, dir: string | null, opts: { host: string }): Promise<number> {
   if (!dir) return 0
   const batch: Array<typeof shellSnapshots.$inferInsert> = []
   for await (const s of readShellSnapshotsDir(dir)) {
-    batch.push({ id: s.id, capturedAt: s.capturedAt, content: s.content })
+    batch.push({ id: s.id, capturedAt: s.capturedAt, content: s.content, host: opts.host })
   }
   if (batch.length === 0) return 0
   const res = await db.insert(shellSnapshots).values(batch).onConflictDoNothing().returning({ id: shellSnapshots.id })
