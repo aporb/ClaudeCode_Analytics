@@ -4,7 +4,7 @@ import { sessions } from '@cca/db/schema'
 import { and, desc, gte, ilike, lte, sql } from 'drizzle-orm'
 
 /** Build a Postgres ARRAY[…]::text[] SQL chunk from a JS string array. */
-function pgTextArray(values: string[]) {
+export function pgTextArray(values: string[]) {
   return sql`ARRAY[${sql.join(values.map((v) => sql`${v}`), sql`, `)}]::text[]`
 }
 
@@ -12,6 +12,8 @@ export interface SessionsQuery {
   project?: string
   since?: { start: Date; end: Date }
   models?: string[]
+  /** Host filter: null/undefined = all hosts; non-empty array = restrict to those hosts. */
+  hosts?: string[] | null
   sortBy?: 'recent' | 'cost'
   limit?: number
   offset?: number
@@ -28,6 +30,9 @@ export async function listSessions(q: SessionsQuery) {
   if (q.models?.length) {
     conditions.push(sql`${sessions.modelsUsed} && ${pgTextArray(q.models)}`)
   }
+  if (q.hosts && q.hosts.length > 0) {
+    conditions.push(sql`${sessions.host} = ANY(${pgTextArray(q.hosts)})`)
+  }
   const order = q.sortBy === 'cost' ? sql`${sessions.estimatedCostUsd} DESC NULLS LAST` : desc(sessions.startedAt)
   return db
     .select({
@@ -41,6 +46,7 @@ export async function listSessions(q: SessionsQuery) {
       firstPrompt: sessions.firstUserPrompt,
       status: sessions.status,
       modelsUsed: sessions.modelsUsed,
+      host: sessions.host,
     })
     .from(sessions)
     .where(conditions.length ? and(...conditions) : undefined)
@@ -49,7 +55,7 @@ export async function listSessions(q: SessionsQuery) {
     .offset(q.offset ?? 0)
 }
 
-export async function countSessions(q: Pick<SessionsQuery, 'project' | 'since' | 'models'>): Promise<number> {
+export async function countSessions(q: Pick<SessionsQuery, 'project' | 'since' | 'models' | 'hosts'>): Promise<number> {
   const db = getDb()
   const conditions = []
   if (q.project) conditions.push(ilike(sessions.projectPath, `%${q.project}%`))
@@ -59,6 +65,9 @@ export async function countSessions(q: Pick<SessionsQuery, 'project' | 'since' |
   }
   if (q.models?.length) {
     conditions.push(sql`${sessions.modelsUsed} && ${pgTextArray(q.models)}`)
+  }
+  if (q.hosts && q.hosts.length > 0) {
+    conditions.push(sql`${sessions.host} = ANY(${pgTextArray(q.hosts)})`)
   }
   const [row] = await db
     .select({ c: sql<number>`COUNT(*)::int` })
