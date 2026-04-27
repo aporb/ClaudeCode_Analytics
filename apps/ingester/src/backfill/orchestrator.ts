@@ -85,10 +85,10 @@ export async function backfillAll(claudeHome: string, opts: { concurrency?: numb
   for (const c of chunks) await rollupSessions(db, c)
 
   console.log(pc.dim('ingesting ancillary streams...'))
-  const h = await ingestHistory(db, sources.history)
-  const t = await ingestTodos(db, sources.todosDir)
-  const fh = await ingestFileHistory(db, sources.fileHistoryDir)
-  const ss = await ingestShellSnapshots(db, sources.shellSnapshotsDir)
+  const h = await ingestHistory(db, sources.history, { host: 'local' })
+  const t = await ingestTodos(db, sources.todosDir, { host: 'local' })
+  const fh = await ingestFileHistory(db, sources.fileHistoryDir, { host: 'local' })
+  const ss = await ingestShellSnapshots(db, sources.shellSnapshotsDir, { host: 'local' })
   console.log(pc.dim(`  history: ${h}, todos: ${t}, file snapshots: ${fh}, shell: ${ss}`))
 
   console.log(pc.dim('refreshing materialized views...'))
