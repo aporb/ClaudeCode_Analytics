@@ -46,7 +46,7 @@ export async function ingestFileDelta(
   const inserted = await insertEventsBatch(db, batch, { host: 'local' })
   if (inserted > 0) {
     await deriveMessagesFromEvents(db, batch, { host: 'local' })
-    await deriveToolCallsFromEvents(db, batch)
+    await deriveToolCallsFromEvents(db, batch, { host: 'local' })
     await rollupSessions(db, [...sessionIds])
     for (const e of batch) broadcaster.publish({
       kind: 'event',

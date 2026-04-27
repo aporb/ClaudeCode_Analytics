@@ -52,12 +52,43 @@ describe('derive tool_calls', () => {
 
   it('pairs tool_use with tool_result and computes duration', async () => {
     await insertEventsBatch(db, [toolUseEvent, toolResultEvent], { host: 'local' })
-    const n = await deriveToolCallsFromEvents(db, [toolUseEvent, toolResultEvent])
+    const n = await deriveToolCallsFromEvents(db, [toolUseEvent, toolResultEvent], { host: 'local' })
     expect(n).toBe(1)
     const rows = await sql`SELECT * FROM tool_calls WHERE uuid = ${toolUseEvent.uuid}`
     expect(rows[0]?.tool_name).toBe('Read')
     expect(Number(rows[0]?.duration_ms)).toBe(500)
     expect(rows[0]?.is_error).toBe(false)
     expect(rows[0]?.result_uuid).toBe(toolResultEvent.uuid)
+  })
+
+  it('stamps host on every inserted tool_call row', async () => {
+    const useEvent: ParsedEvent = {
+      ...toolUseEvent,
+      uuid: '00000000-0000-0000-0000-000000000022',
+      sessionId: 's-tool-htest',
+      payload: {
+        uuid: '00000000-0000-0000-0000-000000000022',
+        message: { role: 'assistant', content: [
+          { type: 'tool_use', id: 'tu-2', name: 'Read', input: { file_path: '/y' } },
+        ]},
+      },
+    }
+    const resultEvent: ParsedEvent = {
+      ...toolResultEvent,
+      uuid: '00000000-0000-0000-0000-000000000023',
+      sessionId: 's-tool-htest',
+      parentUuid: useEvent.uuid,
+      payload: {
+        uuid: '00000000-0000-0000-0000-000000000023',
+        message: { role: 'user', content: [
+          { type: 'tool_result', tool_use_id: 'tu-2', content: 'file body', is_error: false },
+        ]},
+      },
+    }
+    await insertEventsBatch(db, [useEvent, resultEvent], { host: 'h-test' })
+    const n = await deriveToolCallsFromEvents(db, [useEvent, resultEvent], { host: 'h-test' })
+    expect(n).toBe(1)
+    const rows = await sql`SELECT host FROM tool_calls WHERE uuid = ${useEvent.uuid}`
+    expect(rows[0]?.host).toBe('h-test')
   })
 })
