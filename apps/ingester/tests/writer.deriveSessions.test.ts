@@ -52,7 +52,7 @@ describe('rollup sessions', () => {
       }},
     }
     await insertEventsBatch(db, [e1, e2], { host: 'local' })
-    await deriveMessagesFromEvents(db, [e1, e2])
+    await deriveMessagesFromEvents(db, [e1, e2], { host: 'local' })
     await rollupSessions(db, ['s-roll'])
 
     const rows = await sql`SELECT * FROM sessions WHERE session_id = 's-roll'`

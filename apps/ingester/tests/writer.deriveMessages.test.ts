@@ -53,7 +53,7 @@ describe('derive messages', () => {
 
   it('inserts a message row with flattened text and usage', async () => {
     await insertEventsBatch(db, [assistantEvent], { host: 'local' })
-    const n = await deriveMessagesFromEvents(db, [assistantEvent])
+    const n = await deriveMessagesFromEvents(db, [assistantEvent], { host: 'local' })
     expect(n).toBe(1)
     const rows = await sql`SELECT * FROM messages WHERE uuid = ${assistantEvent.uuid}`
     expect(rows[0]?.role).toBe('assistant')
@@ -62,5 +62,22 @@ describe('derive messages', () => {
     expect(Number(rows[0]?.input_tokens)).toBe(100)
     expect(Number(rows[0]?.output_tokens)).toBe(20)
     expect(Number(rows[0]?.cache_read_tokens)).toBe(50)
+  })
+
+  it('stamps host on every inserted message row', async () => {
+    const picoEvent: ParsedEvent = {
+      ...assistantEvent,
+      uuid: '00000000-0000-0000-0000-000000000011',
+      sessionId: 's-derive-pico',
+      payload: {
+        ...assistantEvent.payload,
+        uuid: '00000000-0000-0000-0000-000000000011',
+      } as ParsedEvent['payload'],
+    }
+    await insertEventsBatch(db, [picoEvent], { host: 'picoclaw' })
+    const n = await deriveMessagesFromEvents(db, [picoEvent], { host: 'picoclaw' })
+    expect(n).toBe(1)
+    const rows = await sql`SELECT host FROM messages WHERE uuid = ${picoEvent.uuid}`
+    expect(rows[0]?.host).toBe('picoclaw')
   })
 })
