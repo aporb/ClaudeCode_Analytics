@@ -1,9 +1,9 @@
-import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
-import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
-import { sql } from 'drizzle-orm'
+import { type IncomingMessage, type ServerResponse, createServer } from 'node:http'
 import { sessions } from '@cca/db'
 import type * as schema from '@cca/db/schema'
-import type { Broadcaster, BroadcastEvent } from './broadcaster.js'
+import { sql } from 'drizzle-orm'
+import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
+import type { BroadcastEvent, Broadcaster } from './broadcaster.js'
 
 type Db = PostgresJsDatabase<typeof schema>
 
@@ -29,7 +29,11 @@ async function readJsonBody(req: IncomingMessage): Promise<Record<string, unknow
   for await (const c of req) chunks.push(c as Buffer)
   const raw = Buffer.concat(chunks).toString('utf8')
   if (!raw) return {}
-  try { return JSON.parse(raw) as Record<string, unknown> } catch { return {} }
+  try {
+    return JSON.parse(raw) as Record<string, unknown>
+  } catch {
+    return {}
+  }
 }
 
 function writeJson(res: ServerResponse, status: number, body: unknown): void {
@@ -39,13 +43,17 @@ function writeJson(res: ServerResponse, status: number, body: unknown): void {
 
 export async function startServer(opts: ServerOptions): Promise<RunningServer> {
   let lastEventAt: number | null = null
-  opts.broadcaster.subscribe(() => { lastEventAt = Date.now() })
+  opts.broadcaster.subscribe(() => {
+    lastEventAt = Date.now()
+  })
 
   const server = createServer(async (req, res) => {
     addCors(res)
 
     if (req.method === 'OPTIONS') {
-      res.writeHead(204); res.end(); return
+      res.writeHead(204)
+      res.end()
+      return
     }
 
     const url = new URL(req.url ?? '/', `http://localhost:${opts.port}`)
@@ -67,9 +75,12 @@ export async function startServer(opts: ServerOptions): Promise<RunningServer> {
         writeJson(res, 400, { error: 'sessionId and event required' })
         return
       }
-      const status = event === 'SessionStart' ? 'active'
-        : event === 'SessionEnd' || event === 'Stop' ? 'ended'
-        : null
+      const status =
+        event === 'SessionStart'
+          ? 'active'
+          : event === 'SessionEnd' || event === 'Stop'
+            ? 'ended'
+            : null
       if (status) {
         await opts.db
           .insert(sessions)
@@ -80,7 +91,8 @@ export async function startServer(opts: ServerOptions): Promise<RunningServer> {
           })
       }
       opts.broadcaster.publish({ kind: 'status', payload: { sessionId, event, status } })
-      res.writeHead(204); res.end()
+      res.writeHead(204)
+      res.end()
       return
     }
 
@@ -88,18 +100,19 @@ export async function startServer(opts: ServerOptions): Promise<RunningServer> {
       res.writeHead(200, {
         'content-type': 'text/event-stream',
         'cache-control': 'no-cache',
-        'connection': 'keep-alive',
+        connection: 'keep-alive',
       })
       const write = (e: BroadcastEvent) => {
         res.write(`event: ${e.kind}\ndata: ${JSON.stringify(e.payload)}\n\n`)
       }
-      res.write(`event: heartbeat\ndata: {}\n\n`)
+      res.write('event: heartbeat\ndata: {}\n\n')
       const unsub = opts.broadcaster.subscribe(write)
       req.on('close', () => unsub())
       return
     }
 
-    res.writeHead(404); res.end()
+    res.writeHead(404)
+    res.end()
   })
 
   await new Promise<void>((resolve) => server.listen(opts.port, 'localhost', resolve))

@@ -1,5 +1,5 @@
-import { cn } from '@/lib/utils'
 import { applyRedaction } from '@/lib/redaction'
+import { cn } from '@/lib/utils'
 
 interface EventLike {
   uuid: string
@@ -19,12 +19,25 @@ function extractPreview(payload: unknown): { kind: string; text: string } {
   const content = msg?.content
   if (typeof content === 'string') return { kind: 'text', text: content }
   if (Array.isArray(content)) {
-    for (const block of content as Array<{ type: string; text?: string; input?: unknown; content?: unknown; name?: string }>) {
-      if (block?.type === 'text' && typeof block.text === 'string') return { kind: 'text', text: block.text }
-      if (block?.type === 'thinking' && typeof block.text === 'string') return { kind: 'thinking', text: block.text }
-      if (block?.type === 'tool_use') return { kind: 'tool_use', text: `${block.name ?? '?'}(${JSON.stringify(block.input).slice(0, 200)})` }
+    for (const block of content as Array<{
+      type: string
+      text?: string
+      input?: unknown
+      content?: unknown
+      name?: string
+    }>) {
+      if (block?.type === 'text' && typeof block.text === 'string')
+        return { kind: 'text', text: block.text }
+      if (block?.type === 'thinking' && typeof block.text === 'string')
+        return { kind: 'thinking', text: block.text }
+      if (block?.type === 'tool_use')
+        return {
+          kind: 'tool_use',
+          text: `${block.name ?? '?'}(${JSON.stringify(block.input).slice(0, 200)})`,
+        }
       if (block?.type === 'tool_result') {
-        const body = typeof block.content === 'string' ? block.content : JSON.stringify(block.content)
+        const body =
+          typeof block.content === 'string' ? block.content : JSON.stringify(block.content)
         return { kind: 'tool_result', text: String(body ?? '').slice(0, 300) }
       }
     }
@@ -49,7 +62,8 @@ export function EventRow({ event, raw }: { event: EventLike; raw: boolean }) {
       id={event.uuid}
       className={cn(
         'grid grid-cols-[80px_200px_1fr] gap-4 py-1 text-xs hover:bg-muted/30 rounded px-2',
-        event.isSidechain && 'border-l-2 border-amber-500/60 pl-2 bg-amber-50/30 dark:bg-amber-950/20',
+        event.isSidechain &&
+          'border-l-2 border-amber-500/60 pl-2 bg-amber-50/30 dark:bg-amber-950/20',
       )}
     >
       <span className="text-muted-foreground tabular-nums">{hhmmss(event.timestamp)}</span>

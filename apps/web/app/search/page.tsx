@@ -1,13 +1,23 @@
-import { cookies } from 'next/headers'
-import { ftsSearch, countSearchResults } from '@/lib/queries/search'
-import { resolveSince } from '@/lib/since'
-import { parseHosts } from '@/lib/hosts'
-import { SearchForm } from '@/components/SearchForm'
 import { HostChip } from '@/components/HostChip'
+import { SearchForm } from '@/components/SearchForm'
+import { parseHosts } from '@/lib/hosts'
+import { countSearchResults, ftsSearch } from '@/lib/queries/search'
+import { resolveSince } from '@/lib/since'
+import { cookies } from 'next/headers'
 import Link from 'next/link'
 
-export default async function SearchPage({ searchParams }: {
-  searchParams: Promise<{ q?: string; project?: string; since?: string; model?: string; role?: string; page?: string; host?: string | string[] }>
+export default async function SearchPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    q?: string
+    project?: string
+    since?: string
+    model?: string
+    role?: string
+    page?: string
+    host?: string | string[]
+  }>
 }) {
   const sp = await searchParams
   const q = sp.q?.trim() ?? ''
@@ -64,12 +74,17 @@ export default async function SearchPage({ searchParams }: {
                 {r.sessionId.slice(0, 8)}
               </Link>
             </div>
-            <div className="text-xs text-muted-foreground mb-1">{r.projectPath ?? '(no project)'}</div>
+            <div className="text-xs text-muted-foreground mb-1">
+              {r.projectPath ?? '(no project)'}
+            </div>
             <div
               className="text-sm"
               // ts_headline only emits <b>…</b> — safe to inject
               dangerouslySetInnerHTML={{
-                __html: r.snippet.replace(/<b>/g, '<b class="bg-yellow-200/50 dark:bg-yellow-500/20">'),
+                __html: r.snippet.replace(
+                  /<b>/g,
+                  '<b class="bg-yellow-200/50 dark:bg-yellow-500/20">',
+                ),
               }}
             />
           </li>
@@ -77,8 +92,16 @@ export default async function SearchPage({ searchParams }: {
       </ul>
       {q && total > limit && (
         <div className="flex justify-center gap-3 mt-6 text-sm">
-          {page > 1 && <a href={`?${buildQs(sp, page - 1)}`} className="hover:underline">← Prev</a>}
-          {page < last && <a href={`?${buildQs(sp, page + 1)}`} className="hover:underline">Next →</a>}
+          {page > 1 && (
+            <a href={`?${buildQs(sp, page - 1)}`} className="hover:underline">
+              ← Prev
+            </a>
+          )}
+          {page < last && (
+            <a href={`?${buildQs(sp, page + 1)}`} className="hover:underline">
+              Next →
+            </a>
+          )}
         </div>
       )}
     </main>

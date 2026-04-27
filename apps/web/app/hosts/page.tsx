@@ -1,11 +1,11 @@
-import { cookies } from 'next/headers'
+import { HostChip } from '@/components/HostChip'
+import { Card } from '@/components/ui/card'
+import { parseHosts } from '@/lib/hosts'
+import { type HostStats, getHostStats } from '@/lib/queries/hosts'
+import { resolveSince } from '@/lib/since'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
-import { resolveSince } from '@/lib/since'
-import { parseHosts } from '@/lib/hosts'
-import { getHostStats, type HostStats } from '@/lib/queries/hosts'
-import { Card } from '@/components/ui/card'
-import { HostChip } from '@/components/HostChip'
+import { cookies } from 'next/headers'
 
 dayjs.extend(relativeTime)
 
@@ -81,10 +81,22 @@ function TokenBar({ stats }: { stats: HostStats }) {
         />
       </div>
       <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
-        <span><span className="inline-block h-2 w-2 rounded-sm bg-sky-500 align-middle mr-1" />in {NUMBER.format(stats.totalInputTokens)}</span>
-        <span><span className="inline-block h-2 w-2 rounded-sm bg-violet-500 align-middle mr-1" />out {NUMBER.format(stats.totalOutputTokens)}</span>
-        <span><span className="inline-block h-2 w-2 rounded-sm bg-amber-500 align-middle mr-1" />cache+ {NUMBER.format(stats.totalCacheCreation)}</span>
-        <span><span className="inline-block h-2 w-2 rounded-sm bg-emerald-500 align-middle mr-1" />cache✓ {NUMBER.format(stats.totalCacheRead)}</span>
+        <span>
+          <span className="inline-block h-2 w-2 rounded-sm bg-sky-500 align-middle mr-1" />
+          in {NUMBER.format(stats.totalInputTokens)}
+        </span>
+        <span>
+          <span className="inline-block h-2 w-2 rounded-sm bg-violet-500 align-middle mr-1" />
+          out {NUMBER.format(stats.totalOutputTokens)}
+        </span>
+        <span>
+          <span className="inline-block h-2 w-2 rounded-sm bg-amber-500 align-middle mr-1" />
+          cache+ {NUMBER.format(stats.totalCacheCreation)}
+        </span>
+        <span>
+          <span className="inline-block h-2 w-2 rounded-sm bg-emerald-500 align-middle mr-1" />
+          cache✓ {NUMBER.format(stats.totalCacheRead)}
+        </span>
       </div>
     </div>
   )
@@ -104,7 +116,9 @@ function HostCard({ stats }: { stats: HostStats }) {
           <RelTime date={stats.lastPulledAt} />
         </div>
         <div>
-          <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Last active</div>
+          <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
+            Last active
+          </div>
           <RelTime date={stats.lastActiveAt} />
         </div>
       </div>

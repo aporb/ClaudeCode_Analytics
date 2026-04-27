@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
-  getToolErrorRateTrend, getLatencyPercentiles, getSubagentHistogram,
-  getTokenVelocity, getCacheHitByModel,
+  getCacheHitByModel,
+  getLatencyPercentiles,
+  getSubagentHistogram,
+  getTokenVelocity,
+  getToolErrorRateTrend,
 } from './behavior'
 
 const W = { start: new Date('2026-04-01T00:00:00Z'), end: new Date('2026-04-26T23:59:59Z') }

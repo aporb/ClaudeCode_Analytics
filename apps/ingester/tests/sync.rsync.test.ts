@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { detectRsyncVersion, parseRsyncStats } from '../src/sync/rsync.js'
 
 describe('detectRsyncVersion', () => {
@@ -35,7 +35,7 @@ Total transferred file size: 5,432 bytes
 
 describe('parseRsyncStats — version 2.6.9 fallback (--itemize-changes line count)', () => {
   it('counts non-empty itemize lines', () => {
-    const out = `>f+++++++++ projects/foo.jsonl\n>f.st...... projects/bar.jsonl\n`
+    const out = '>f+++++++++ projects/foo.jsonl\n>f.st...... projects/bar.jsonl\n'
     expect(parseRsyncStats(out, { major: 2, minor: 6 })).toEqual({
       filesTransferred: 2,
       bytesTransferred: 0,

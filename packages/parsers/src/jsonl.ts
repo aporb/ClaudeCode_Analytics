@@ -21,7 +21,7 @@ export async function* readJsonlLines(
     encoding: 'utf8',
     start: opts.startOffset ?? 0,
   })
-  const rl = createInterface({ input: stream, crlfDelay: Infinity })
+  const rl = createInterface({ input: stream, crlfDelay: Number.POSITIVE_INFINITY })
   let lineNumber = 0
   let byteOffset = opts.startOffset ?? 0
   for await (const line of rl) {
@@ -34,9 +34,10 @@ export async function* readJsonlLines(
     //  2. The JSON escape sequence \u0000, which JSON.parse would decode into U+0000
     // We strip both before parsing so neither form ever reaches the DB.
     // Seen in ~12 files in real CC transcripts; null bytes are never meaningful content.
-    const sanitized = (line.includes('\u0000') || line.includes('\\u0000'))
-      ? line.replaceAll('\u0000', '').replaceAll('\\u0000', '')
-      : line
+    const sanitized =
+      line.includes('\u0000') || line.includes('\\u0000')
+        ? line.replaceAll('\u0000', '').replaceAll('\\u0000', '')
+        : line
     try {
       const value = JSON.parse(sanitized)
       yield { value, raw: line, lineNumber, byteOffset }

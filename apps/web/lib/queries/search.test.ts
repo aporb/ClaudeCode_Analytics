@@ -1,6 +1,6 @@
-import { describe, expect, it, beforeAll, afterAll } from 'vitest'
 import postgres from 'postgres'
-import { ftsSearch, countSearchResults } from './search'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { countSearchResults, ftsSearch } from './search'
 
 // Test data is isolated by a unique time window + dedicated test host names
 // + a unique search token so it doesn't collide with real ingested data.
@@ -56,11 +56,11 @@ describe('ftsSearch / countSearchResults — host filter + host on row', () => {
         uuid, session_id, role, timestamp, model, text_content, host
       ) VALUES
         (${E_A1}::uuid, 'th_srch_a1', 'user', '2099-04-05T10:00:00Z', NULL,
-          ${'hello ' + KEYWORD + ' world'}, ${TH_A}),
+          ${`hello ${KEYWORD} world`}, ${TH_A}),
         (${E_A2}::uuid, 'th_srch_a2', 'assistant', '2099-04-10T10:00:00Z', 'claude-sonnet-4-6',
-          ${'reply ' + KEYWORD + ' here'}, ${TH_A}),
+          ${`reply ${KEYWORD} here`}, ${TH_A}),
         (${E_B1}::uuid, 'th_srch_b1', 'user', '2099-04-15T10:00:00Z', NULL,
-          ${'another ' + KEYWORD + ' message'}, ${TH_B})
+          ${`another ${KEYWORD} message`}, ${TH_B})
     `
 
     // Populate text_tsv (mirrors the post-insert UPDATE in
@@ -94,7 +94,7 @@ describe('ftsSearch / countSearchResults — host filter + host on row', () => {
 
     const rowsB = await ftsSearch({ q: KEYWORD, since: TH_WIN, hosts: [TH_B], limit: 50 })
     expect(rowsB.length).toBe(1)
-    expect(rowsB[0]!.host).toBe(TH_B)
+    expect(rowsB[0]?.host).toBe(TH_B)
   })
 
   it('host filter narrows countSearchResults to the given hosts', async () => {

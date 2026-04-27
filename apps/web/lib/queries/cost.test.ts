@@ -1,13 +1,13 @@
-import { describe, expect, it, beforeAll, afterAll } from 'vitest'
 import postgres from 'postgres'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import {
+  getActiveHoursHeatmap,
+  getCacheHitTrend,
+  getCostDistribution,
   getCostKpis,
   getSpendStackedByModel,
-  getTopCostSessions,
-  getCostDistribution,
-  getCacheHitTrend,
-  getActiveHoursHeatmap,
   getTokenTotals,
+  getTopCostSessions,
 } from './cost'
 
 const SINCE = { start: new Date('2026-04-01T00:00:00Z'), end: new Date('2026-04-26T23:59:59Z') }
@@ -38,7 +38,9 @@ describe('cost queries', () => {
     const rows = await getTopCostSessions(SINCE, 5)
     expect(rows.length).toBeLessThanOrEqual(5)
     for (let i = 1; i < rows.length; i++) {
-      expect(rows[i - 1]!.cost).toBeGreaterThanOrEqual(rows[i]!.cost)
+      const prev = rows[i - 1]?.cost ?? 0
+      const curr = rows[i]?.cost ?? 0
+      expect(prev).toBeGreaterThanOrEqual(curr)
     }
   })
 

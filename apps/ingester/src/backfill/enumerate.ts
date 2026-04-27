@@ -23,12 +23,14 @@ export function enumerateSources(claudeHome: string): Sources {
   return {
     transcripts: walkJsonl(join(claudeHome, 'projects')),
     history: existsSync(join(claudeHome, 'history.jsonl'))
-      ? join(claudeHome, 'history.jsonl') : null,
-    todosDir: existsSync(join(claudeHome, 'todos'))
-      ? join(claudeHome, 'todos') : null,
+      ? join(claudeHome, 'history.jsonl')
+      : null,
+    todosDir: existsSync(join(claudeHome, 'todos')) ? join(claudeHome, 'todos') : null,
     fileHistoryDir: existsSync(join(claudeHome, 'file-history'))
-      ? join(claudeHome, 'file-history') : null,
+      ? join(claudeHome, 'file-history')
+      : null,
     shellSnapshotsDir: existsSync(join(claudeHome, 'shell-snapshots'))
-      ? join(claudeHome, 'shell-snapshots') : null,
+      ? join(claudeHome, 'shell-snapshots')
+      : null,
   }
 }

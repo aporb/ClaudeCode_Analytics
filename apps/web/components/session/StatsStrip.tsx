@@ -1,5 +1,18 @@
-export function StatsStrip({ cost, messages, toolCalls, toolErrors, cacheHitPct, subagents }:
-  { cost: number; messages: number; toolCalls: number; toolErrors: number; cacheHitPct: number; subagents: number }) {
+export function StatsStrip({
+  cost,
+  messages,
+  toolCalls,
+  toolErrors,
+  cacheHitPct,
+  subagents,
+}: {
+  cost: number
+  messages: number
+  toolCalls: number
+  toolErrors: number
+  cacheHitPct: number
+  subagents: number
+}) {
   const cells = [
     ['Cost', `$${cost.toFixed(2)}`],
     ['Messages', String(messages)],

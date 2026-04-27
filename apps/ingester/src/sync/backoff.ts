@@ -27,11 +27,7 @@ export function advanceBackoff(
   const kind = typeof outcome === 'string' ? outcome : outcome.kind
   if (kind === 'error') {
     const message =
-      typeof outcome === 'string'
-        ? 'error'
-        : outcome.kind === 'error'
-          ? outcome.message
-          : 'error'
+      typeof outcome === 'string' ? 'error' : outcome.kind === 'error' ? outcome.message : 'error'
     return {
       ...prev,
       consecutiveErrors: prev.consecutiveErrors + 1,

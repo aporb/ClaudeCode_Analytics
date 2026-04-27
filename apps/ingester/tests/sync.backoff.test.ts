@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { advanceBackoff, type BackoffInputState } from '../src/sync/backoff.js'
+import { describe, expect, it } from 'vitest'
+import { type BackoffInputState, advanceBackoff } from '../src/sync/backoff.js'
 
 interface State {
   consecutiveEmptyPulls: number

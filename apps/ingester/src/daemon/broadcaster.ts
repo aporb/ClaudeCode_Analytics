@@ -15,11 +15,15 @@ export class Broadcaster {
 
   publish(event: BroadcastEvent): void {
     for (const fn of this.#subscribers) {
-      try { fn(event) } catch (e) {
+      try {
+        fn(event)
+      } catch (e) {
         console.error('broadcaster subscriber error:', e)
       }
     }
   }
 
-  get size(): number { return this.#subscribers.size }
+  get size(): number {
+    return this.#subscribers.size
+  }
 }

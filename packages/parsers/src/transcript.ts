@@ -1,5 +1,5 @@
 import { projectPathFromFile } from '@cca/core'
-import type { ParsedEvent, EventType } from '@cca/core'
+import type { EventType, ParsedEvent } from '@cca/core'
 import { readJsonlLines } from './jsonl.js'
 
 export function isSidechainPath(file: string): boolean {
@@ -22,7 +22,10 @@ function deriveSubtype(raw: Record<string, unknown>): string | null {
   if (type === 'user') {
     const msg = raw.message as { content?: unknown } | undefined
     const content = msg?.content
-    if (Array.isArray(content) && content.some((c: unknown) => (c as Record<string, unknown>)?.type === 'tool_result')) {
+    if (
+      Array.isArray(content) &&
+      content.some((c: unknown) => (c as Record<string, unknown>)?.type === 'tool_result')
+    ) {
       return 'tool_result'
     }
     return 'user_message'
@@ -55,7 +58,7 @@ export async function* readTranscript(file: string): AsyncGenerator<ParsedEvent>
       ccVersion: (raw.version as string | undefined) ?? null,
       entrypoint: (raw.entrypoint as string | undefined) ?? null,
       isSidechain: sidechain || Boolean(raw.isSidechain),
-      agentId: agentId ?? ((raw.agentId as string | undefined) ?? null),
+      agentId: agentId ?? (raw.agentId as string | undefined) ?? null,
       requestId: (raw.requestId as string | undefined) ?? null,
       payload: raw,
       sourceFile: file,

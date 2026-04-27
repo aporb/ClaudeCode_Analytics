@@ -62,7 +62,13 @@ export async function runRsync(
   const args =
     version.major >= 3
       ? ['-az', '--delete-after', '--info=stats2', `${sshTarget}:${remoteHome}/`, `${localDest}/`]
-      : ['-az', '--delete-after', '--itemize-changes', `${sshTarget}:${remoteHome}/`, `${localDest}/`]
+      : [
+          '-az',
+          '--delete-after',
+          '--itemize-changes',
+          `${sshTarget}:${remoteHome}/`,
+          `${localDest}/`,
+        ]
 
   return new Promise((resolve) => {
     let stdout = ''

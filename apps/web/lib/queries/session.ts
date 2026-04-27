@@ -1,7 +1,7 @@
 import 'server-only'
-import { getDb } from '../db'
-import { sessions, events, toolCalls } from '@cca/db/schema'
+import { events, sessions, toolCalls } from '@cca/db/schema'
 import { asc, eq, sql } from 'drizzle-orm'
+import { getDb } from '../db'
 
 export async function getSessionMeta(sessionId: string) {
   const db = getDb()
@@ -11,12 +11,20 @@ export async function getSessionMeta(sessionId: string) {
 
 export async function getSessionEvents(sessionId: string) {
   const db = getDb()
-  return db.select().from(events).where(eq(events.sessionId, sessionId)).orderBy(asc(events.timestamp))
+  return db
+    .select()
+    .from(events)
+    .where(eq(events.sessionId, sessionId))
+    .orderBy(asc(events.timestamp))
 }
 
 export async function getSessionToolCalls(sessionId: string) {
   const db = getDb()
-  return db.select().from(toolCalls).where(eq(toolCalls.sessionId, sessionId)).orderBy(asc(toolCalls.timestamp))
+  return db
+    .select()
+    .from(toolCalls)
+    .where(eq(toolCalls.sessionId, sessionId))
+    .orderBy(asc(toolCalls.timestamp))
 }
 
 export async function getSessionStats(sessionId: string) {
@@ -53,10 +61,15 @@ export async function getSessionStats(sessionId: string) {
       COALESCE(json_agg(json_build_object('model', model, 'cost', cost) ORDER BY cost DESC), '[]'::json) AS cost_by_model
     FROM per_model
   `)
-  const row = (rows as unknown as Array<{
-    cache_read: string; input_tokens: string; output_tokens: string; cache_create: string
-    cost_by_model: { model: string; cost: number }[]
-  }>)[0]
+  const row = (
+    rows as unknown as Array<{
+      cache_read: string
+      input_tokens: string
+      output_tokens: string
+      cache_create: string
+      cost_by_model: { model: string; cost: number }[]
+    }>
+  )[0]
   const inTok = Number(row?.input_tokens ?? 0)
   const cacheRead = Number(row?.cache_read ?? 0)
   return {
@@ -81,9 +94,13 @@ export async function getSessionTopTools(sessionId: string, limit = 5) {
     ORDER BY calls DESC
     LIMIT ${limit}
   `)
-  return (rows as unknown as Array<{ tool_name: string; calls: string; errors: string }>).map((r) => ({
-    tool: r.tool_name, calls: Number(r.calls), errors: Number(r.errors),
-  }))
+  return (rows as unknown as Array<{ tool_name: string; calls: string; errors: string }>).map(
+    (r) => ({
+      tool: r.tool_name,
+      calls: Number(r.calls),
+      errors: Number(r.errors),
+    }),
+  )
 }
 
 export async function getSessionFilesTouched(sessionId: string, limit = 5) {
@@ -105,8 +122,11 @@ export async function getSessionFilesTouched(sessionId: string, limit = 5) {
       AND tool_name IN ('Read', 'Write', 'Edit', 'MultiEdit', 'NotebookEdit')
       AND input->>'file_path' IS NOT NULL
   `)
-  const total = Number(((all as unknown as Array<{ total: string }>)[0])?.total ?? 0)
-  const top = (rows as unknown as Array<{ file: string; n: string }>).map((r) => ({ file: r.file, n: Number(r.n) }))
+  const total = Number((all as unknown as Array<{ total: string }>)[0]?.total ?? 0)
+  const top = (rows as unknown as Array<{ file: string; n: string }>).map((r) => ({
+    file: r.file,
+    n: Number(r.n),
+  }))
   return { top, total }
 }
 

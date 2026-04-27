@@ -1,8 +1,8 @@
 import '@testing-library/jest-dom/vitest'
-import { cleanup } from '@testing-library/react'
-import { afterEach } from 'vitest'
 import fs from 'node:fs'
 import path from 'node:path'
+import { cleanup } from '@testing-library/react'
+import { afterEach } from 'vitest'
 
 // Load .env.local for real-DB tests (symlink resolved automatically by Node fs)
 const envPath = path.resolve(import.meta.dirname, '.env.local')

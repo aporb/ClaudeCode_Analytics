@@ -1,11 +1,11 @@
 import { EventSourceParserStream } from 'eventsource-parser/stream'
 
-export interface SSEEvent { event: string; data: string }
+export interface SSEEvent {
+  event: string
+  data: string
+}
 
-export async function* consumeSse(
-  url: string,
-  signal: AbortSignal,
-): AsyncGenerator<SSEEvent> {
+export async function* consumeSse(url: string, signal: AbortSignal): AsyncGenerator<SSEEvent> {
   const res = await fetch(url, { signal, headers: { accept: 'text/event-stream' } })
   if (!res.ok) throw new Error(`SSE connect failed: ${res.status}`)
   if (!res.body) throw new Error('SSE response has no body')

@@ -1,6 +1,6 @@
+import { spawn } from 'node:child_process'
 import { Command } from 'commander'
 import pc from 'picocolors'
-import { spawn } from 'node:child_process'
 
 export function openCommand(): Command {
   return new Command('open')

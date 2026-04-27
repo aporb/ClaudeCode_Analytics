@@ -1,19 +1,25 @@
-import { resolveSince } from '@/lib/since'
-import {
-  getCostKpis, getSpendStackedByModel, getTopCostSessions,
-  getCostDistribution, getCacheHitTrend, getActiveHoursHeatmap,
-} from '@/lib/queries/cost'
-import { computeBriefing } from '@/lib/briefing'
-import { KpiStrip } from '@/components/cost/KpiStrip'
-import { BriefingCard } from '@/components/cost/BriefingCard'
-import { TopCostSessions } from '@/components/cost/TopCostSessions'
-import { CostDistributionCard } from '@/components/cost/CostDistributionCard'
-import { StackedAreaSpend } from '@/components/charts/StackedAreaSpend'
-import { CacheHitTrend } from '@/components/charts/CacheHitTrend'
-import { ActiveHoursHeatmap } from '@/components/charts/ActiveHoursHeatmap'
 import { TokenHeadline } from '@/components/TokenHeadline'
+import { ActiveHoursHeatmap } from '@/components/charts/ActiveHoursHeatmap'
+import { CacheHitTrend } from '@/components/charts/CacheHitTrend'
+import { StackedAreaSpend } from '@/components/charts/StackedAreaSpend'
+import { BriefingCard } from '@/components/cost/BriefingCard'
+import { CostDistributionCard } from '@/components/cost/CostDistributionCard'
+import { KpiStrip } from '@/components/cost/KpiStrip'
+import { TopCostSessions } from '@/components/cost/TopCostSessions'
+import { computeBriefing } from '@/lib/briefing'
+import {
+  getActiveHoursHeatmap,
+  getCacheHitTrend,
+  getCostDistribution,
+  getCostKpis,
+  getSpendStackedByModel,
+  getTopCostSessions,
+} from '@/lib/queries/cost'
+import { resolveSince } from '@/lib/since'
 
-export default async function CostHome({ searchParams }: { searchParams: Promise<{ since?: string; host?: string | string[] }> }) {
+export default async function CostHome({
+  searchParams,
+}: { searchParams: Promise<{ since?: string; host?: string | string[] }> }) {
   const sp = await searchParams
   const window = resolveSince(sp.since)
   const [kpis, spend, top, dist, cache, heatmap] = await Promise.all([
@@ -25,8 +31,11 @@ export default async function CostHome({ searchParams }: { searchParams: Promise
     getActiveHoursHeatmap(window),
   ])
 
-  const yesterdayStart = new Date(); yesterdayStart.setHours(0, 0, 0, 0); yesterdayStart.setDate(yesterdayStart.getDate() - 1)
-  const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
+  const yesterdayStart = new Date()
+  yesterdayStart.setHours(0, 0, 0, 0)
+  yesterdayStart.setDate(yesterdayStart.getDate() - 1)
+  const todayStart = new Date()
+  todayStart.setHours(0, 0, 0, 0)
   const yesterdayKpis = await getCostKpis({ start: yesterdayStart, end: todayStart })
 
   const topProjectRow = top[0]
@@ -35,11 +44,13 @@ export default async function CostHome({ searchParams }: { searchParams: Promise
     windowCostPriorPeriod: kpis.windowCostPriorPeriod,
     cacheHitPct: kpis.cacheHitPct,
     cacheHitPctPrior: kpis.cacheHitPctPrior,
-    topProject: topProjectRow ? {
-      project: topProjectRow.projectPath?.replace(/^\/Users\/[^/]+\//, '~/') ?? '(none)',
-      model: topProjectRow.modelsUsed[0] ?? '',
-      cost: topProjectRow.cost,
-    } : null,
+    topProject: topProjectRow
+      ? {
+          project: topProjectRow.projectPath?.replace(/^\/Users\/[^/]+\//, '~/') ?? '(none)',
+          model: topProjectRow.modelsUsed[0] ?? '',
+          cost: topProjectRow.cost,
+        }
+      : null,
     windowLabel: window.label,
     isPartialDay: sp.since === 'today' && new Date().getHours() < 6,
   })
@@ -58,7 +69,9 @@ export default async function CostHome({ searchParams }: { searchParams: Promise
         <BriefingCard briefing={briefing} />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2"><TopCostSessions rows={top} /></div>
+        <div className="lg:col-span-2">
+          <TopCostSessions rows={top} />
+        </div>
         <CostDistributionCard distribution={dist} />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

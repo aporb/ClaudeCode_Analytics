@@ -1,14 +1,14 @@
 import { statSync } from 'node:fs'
-import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
-import { eq, sql } from 'drizzle-orm'
-import { readTranscript } from '@cca/parsers'
 import type { ParsedEvent } from '@cca/core'
 import { ingestCursors } from '@cca/db'
 import type * as schema from '@cca/db/schema'
-import { insertEventsBatch } from '../writer/events.js'
+import { readTranscript } from '@cca/parsers'
+import { eq, sql } from 'drizzle-orm'
+import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 import { deriveMessagesFromEvents } from '../writer/deriveMessages.js'
-import { deriveToolCallsFromEvents } from '../writer/deriveToolCalls.js'
 import { rollupSessions } from '../writer/deriveSessions.js'
+import { deriveToolCallsFromEvents } from '../writer/deriveToolCalls.js'
+import { insertEventsBatch } from '../writer/events.js'
 import type { Broadcaster } from './broadcaster.js'
 
 type Db = PostgresJsDatabase<typeof schema>
@@ -48,10 +48,17 @@ export async function ingestFileDelta(
     await deriveMessagesFromEvents(db, batch, { host: 'local' })
     await deriveToolCallsFromEvents(db, batch, { host: 'local' })
     await rollupSessions(db, [...sessionIds])
-    for (const e of batch) broadcaster.publish({
-      kind: 'event',
-      payload: { uuid: e.uuid, sessionId: e.sessionId, type: e.type, subtype: e.subtype, timestamp: e.timestamp },
-    })
+    for (const e of batch)
+      broadcaster.publish({
+        kind: 'event',
+        payload: {
+          uuid: e.uuid,
+          sessionId: e.sessionId,
+          type: e.type,
+          subtype: e.subtype,
+          timestamp: e.timestamp,
+        },
+      })
   }
 
   await db

@@ -16,14 +16,14 @@ export function flatToRealPath(flat: string): string {
   // Replace '--' with a placeholder, then single '-' with '/', then placeholder with '_'.
   const placeholder = '\u0000'
   s = s.replaceAll('--', placeholder).replaceAll('-', '/').replaceAll(placeholder, '_')
-  return '/' + s
+  return `/${s}`
 }
 
 export function realToFlatPath(real: string): string {
   let s = real
   if (s.startsWith('/')) s = s.slice(1)
   s = s.replaceAll('_', '--').replaceAll('/', '-')
-  return '-' + s
+  return `-${s}`
 }
 
 // Pull the project dir name out of a full transcript file path under ~/.claude/projects/

@@ -1,31 +1,44 @@
-import {
-  getSessionMeta, getSessionEvents, getSessionToolCalls,
-  getSessionStats, getSessionTopTools, getSessionFilesTouched, getSessionFirstPrompts,
-} from '@/lib/queries/session'
-import { Badge } from '@/components/ui/badge'
-import { HostChip } from '@/components/HostChip'
 import { EventRow } from '@/components/EventRow'
+import { HostChip } from '@/components/HostChip'
 import { ToolCallDetails } from '@/components/ToolCallDetails'
+import { CollapsibleReplay } from '@/components/session/CollapsibleReplay'
+import { CostSplitPanel } from '@/components/session/CostSplitPanel'
+import { FilesTouchedPanel } from '@/components/session/FilesTouchedPanel'
+import { FirstPromptsStrip } from '@/components/session/FirstPromptsStrip'
 import { StatsStrip } from '@/components/session/StatsStrip'
 import { TopToolsPanel } from '@/components/session/TopToolsPanel'
-import { FilesTouchedPanel } from '@/components/session/FilesTouchedPanel'
-import { CostSplitPanel } from '@/components/session/CostSplitPanel'
-import { FirstPromptsStrip } from '@/components/session/FirstPromptsStrip'
-import { CollapsibleReplay } from '@/components/session/CollapsibleReplay'
-import { notFound } from 'next/navigation'
+import { Badge } from '@/components/ui/badge'
+import {
+  getSessionEvents,
+  getSessionFilesTouched,
+  getSessionFirstPrompts,
+  getSessionMeta,
+  getSessionStats,
+  getSessionToolCalls,
+  getSessionTopTools,
+} from '@/lib/queries/session'
 import Link from 'next/link'
+import { notFound } from 'next/navigation'
 
 function modelChipClass(model: string): string {
   if (model.includes('opus')) return 'border-[hsl(var(--model-opus))] text-[hsl(var(--model-opus))]'
-  if (model.includes('sonnet')) return 'border-[hsl(var(--model-sonnet))] text-[hsl(var(--model-sonnet))]'
-  if (model.includes('haiku')) return 'border-[hsl(var(--model-haiku))] text-[hsl(var(--model-haiku))]'
+  if (model.includes('sonnet'))
+    return 'border-[hsl(var(--model-sonnet))] text-[hsl(var(--model-sonnet))]'
+  if (model.includes('haiku'))
+    return 'border-[hsl(var(--model-haiku))] text-[hsl(var(--model-haiku))]'
   return ''
 }
 
-function shortProject(p: string | null): string { return p ? p.replace(/^\/Users\/[^/]+\//, '~/') : '(none)' }
+function shortProject(p: string | null): string {
+  return p ? p.replace(/^\/Users\/[^/]+\//, '~/') : '(none)'
+}
 
-export default async function SessionPage({ params, searchParams }: {
-  params: Promise<{ id: string }>; searchParams: Promise<{ raw?: string; replay?: string }>
+export default async function SessionPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ raw?: string; replay?: string }>
 }) {
   const { id } = await params
   const sp = await searchParams
@@ -54,7 +67,10 @@ export default async function SessionPage({ params, searchParams }: {
   return (
     <div className="space-y-4">
       <div className="text-xs text-muted-foreground">
-        <Link href="/sessions" className="hover:underline">/sessions</Link> / {id.slice(0, 8)}…
+        <Link href="/sessions" className="hover:underline">
+          /sessions
+        </Link>{' '}
+        / {id.slice(0, 8)}…
       </div>
       <div>
         <h1 className="text-xl font-bold">
@@ -108,24 +124,32 @@ export default async function SessionPage({ params, searchParams }: {
             <div key={e.uuid}>
               <EventRow
                 event={{
-                  uuid: e.uuid, type: e.type, subtype: e.subtype,
-                  timestamp: e.timestamp, isSidechain: e.isSidechain, payload: e.payload,
+                  uuid: e.uuid,
+                  type: e.type,
+                  subtype: e.subtype,
+                  timestamp: e.timestamp,
+                  isSidechain: e.isSidechain,
+                  payload: e.payload,
                 }}
                 raw={raw}
               />
-              {toolsByUuid.has(e.uuid) && (
-                <ToolCallDetails
-                  call={{
-                    uuid: e.uuid,
-                    toolName: toolsByUuid.get(e.uuid)!.toolName,
-                    input: toolsByUuid.get(e.uuid)!.input,
-                    result: toolsByUuid.get(e.uuid)!.result,
-                    durationMs: toolsByUuid.get(e.uuid)!.durationMs,
-                    isError: toolsByUuid.get(e.uuid)!.isError,
-                  }}
-                  raw={raw}
-                />
-              )}
+              {(() => {
+                const tool = toolsByUuid.get(e.uuid)
+                if (!tool) return null
+                return (
+                  <ToolCallDetails
+                    call={{
+                      uuid: e.uuid,
+                      toolName: tool.toolName,
+                      input: tool.input,
+                      result: tool.result,
+                      durationMs: tool.durationMs,
+                      isError: tool.isError,
+                    }}
+                    raw={raw}
+                  />
+                )
+              })()}
             </div>
           ))}
         </div>

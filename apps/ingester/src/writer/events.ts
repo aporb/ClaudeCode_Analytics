@@ -1,7 +1,7 @@
-import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
+import type { ParsedEvent } from '@cca/core'
 import { events } from '@cca/db'
 import type * as schema from '@cca/db/schema'
-import type { ParsedEvent } from '@cca/core'
+import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 
 type Db = PostgresJsDatabase<typeof schema>
 

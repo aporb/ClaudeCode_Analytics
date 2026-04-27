@@ -1,18 +1,18 @@
-import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest'
-import { resolve, dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { cpSync, mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
+import { dirname, join, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { config } from 'dotenv'
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 config({ path: resolve(__dirname, '../../../.env.local') })
 
-import postgres from 'postgres'
 import { closeDb, getDb } from '@cca/db'
-import { runHost } from '../src/sync/runHost.js'
-import { upsertState, loadState } from '../src/sync/state.js'
-import type { RsyncOutcome, RsyncVersion } from '../src/sync/rsync.js'
+import postgres from 'postgres'
 import type { RemoteEntry } from '../src/sync/config.js'
+import type { RsyncOutcome, RsyncVersion } from '../src/sync/rsync.js'
+import { runHost } from '../src/sync/runHost.js'
+import { loadState, upsertState } from '../src/sync/state.js'
 
 const TEST_URL = process.env.CCA_DATABASE_URL_TEST!
 const FIXTURE_HOME = resolve(__dirname, 'fixtures/claude-home')
@@ -39,8 +39,16 @@ describe('sync/runHost — per-host run loop', () => {
   beforeAll(async () => {
     process.env.CCA_DATABASE_URL = TEST_URL
     for (const t of [
-      'events','messages','tool_calls','sessions','prompts_history','todos',
-      'file_snapshots','shell_snapshots','_ingest_cursors','host_sync_state',
+      'events',
+      'messages',
+      'tool_calls',
+      'sessions',
+      'prompts_history',
+      'todos',
+      'file_snapshots',
+      'shell_snapshots',
+      '_ingest_cursors',
+      'host_sync_state',
     ]) {
       await sql.unsafe(`TRUNCATE ${t} RESTART IDENTITY CASCADE`)
     }
@@ -56,12 +64,18 @@ describe('sync/runHost — per-host run loop', () => {
     // Wipe any rows from prior scenarios that ingested under our test host so
     // assertions like "no events for this host" remain meaningful across cases.
     for (const t of [
-      'events','messages','tool_calls','sessions','prompts_history','todos',
-      'file_snapshots','shell_snapshots',
+      'events',
+      'messages',
+      'tool_calls',
+      'sessions',
+      'prompts_history',
+      'todos',
+      'file_snapshots',
+      'shell_snapshots',
     ]) {
       await sql.unsafe(`DELETE FROM ${t} WHERE host = $1`, [REMOTE.host])
     }
-    await sql.unsafe(`TRUNCATE _ingest_cursors RESTART IDENTITY CASCADE`)
+    await sql.unsafe('TRUNCATE _ingest_cursors RESTART IDENTITY CASCADE')
   })
 
   afterAll(async () => {
@@ -69,7 +83,11 @@ describe('sync/runHost — per-host run loop', () => {
     await sql.end()
     while (tempDirs.length > 0) {
       const d = tempDirs.pop()!
-      try { rmSync(d, { recursive: true, force: true }) } catch { /* ignore */ }
+      try {
+        rmSync(d, { recursive: true, force: true })
+      } catch {
+        /* ignore */
+      }
     }
   })
 
@@ -78,8 +96,12 @@ describe('sync/runHost — per-host run loop', () => {
     // Pre-seed the mirror with a real fixture so backfillAll has something to chew on.
     const claudeMirror = join(repoRoot, '.cca', 'remotes', REMOTE.host, '.claude')
     cpSync(FIXTURE_HOME, claudeMirror, { recursive: true })
-    cpSync(join(PARSER_FIXTURES, 'file-history'), join(claudeMirror, 'file-history'), { recursive: true })
-    cpSync(join(PARSER_FIXTURES, 'shell-snapshots'), join(claudeMirror, 'shell-snapshots'), { recursive: true })
+    cpSync(join(PARSER_FIXTURES, 'file-history'), join(claudeMirror, 'file-history'), {
+      recursive: true,
+    })
+    cpSync(join(PARSER_FIXTURES, 'shell-snapshots'), join(claudeMirror, 'shell-snapshots'), {
+      recursive: true,
+    })
 
     const rsyncFn = async (): Promise<RsyncOutcome> => ({
       kind: 'success-non-empty',
@@ -88,7 +110,13 @@ describe('sync/runHost — per-host run loop', () => {
     })
 
     const db = getDb()
-    const result = await runHost({ db, repoRoot, remote: REMOTE, rsyncVersion: RSYNC_VERSION, rsyncFn })
+    const result = await runHost({
+      db,
+      repoRoot,
+      remote: REMOTE,
+      rsyncVersion: RSYNC_VERSION,
+      rsyncFn,
+    })
 
     expect(result.kind).toBe('ingested')
     if (result.kind !== 'ingested') return
@@ -106,7 +134,9 @@ describe('sync/runHost — per-host run loop', () => {
     expect(persisted.lastHadDataAt).not.toBeNull()
 
     // Sanity: backfillAll actually ran and stamped this host on rows.
-    const evRows = await sql.unsafe(`SELECT count(*)::int AS n FROM events WHERE host = $1`, [REMOTE.host])
+    const evRows = await sql.unsafe('SELECT count(*)::int AS n FROM events WHERE host = $1', [
+      REMOTE.host,
+    ])
     expect((evRows[0] as { n: number }).n).toBeGreaterThan(0)
   }, 60_000)
 
@@ -133,7 +163,13 @@ describe('sync/runHost — per-host run loop', () => {
       stdout: '',
     })
 
-    const result = await runHost({ db, repoRoot, remote: REMOTE, rsyncVersion: RSYNC_VERSION, rsyncFn })
+    const result = await runHost({
+      db,
+      repoRoot,
+      remote: REMOTE,
+      rsyncVersion: RSYNC_VERSION,
+      rsyncFn,
+    })
 
     expect(result.kind).toBe('skipped-empty')
     if (result.kind !== 'skipped-empty') return
@@ -158,7 +194,13 @@ describe('sync/runHost — per-host run loop', () => {
       stderr: 'connection refused',
     })
 
-    const result = await runHost({ db, repoRoot, remote: REMOTE, rsyncVersion: RSYNC_VERSION, rsyncFn })
+    const result = await runHost({
+      db,
+      repoRoot,
+      remote: REMOTE,
+      rsyncVersion: RSYNC_VERSION,
+      rsyncFn,
+    })
 
     expect(result.kind).toBe('error')
     if (result.kind !== 'error') return
@@ -173,7 +215,9 @@ describe('sync/runHost — per-host run loop', () => {
     expect(persisted.lastError).toContain('connection refused')
 
     // No ingest happened — events should not have rows for this host.
-    const evRows = await sql.unsafe(`SELECT count(*)::int AS n FROM events WHERE host = $1`, [REMOTE.host])
+    const evRows = await sql.unsafe('SELECT count(*)::int AS n FROM events WHERE host = $1', [
+      REMOTE.host,
+    ])
     expect((evRows[0] as { n: number }).n).toBe(0)
   }, 30_000)
 
@@ -196,14 +240,25 @@ describe('sync/runHost — per-host run loop', () => {
     let rsyncCalls = 0
     const rsyncFn = async (): Promise<RsyncOutcome> => {
       rsyncCalls += 1
-      return { kind: 'success-empty', stats: { filesTransferred: 0, bytesTransferred: 0 }, stdout: '' }
+      return {
+        kind: 'success-empty',
+        stats: { filesTransferred: 0, bytesTransferred: 0 },
+        stdout: '',
+      }
     }
 
     const r1 = await runHost({ db, repoRoot, remote: REMOTE, rsyncVersion: RSYNC_VERSION, rsyncFn })
     expect(r1.kind).toBe('skipped-not-due')
     expect(rsyncCalls).toBe(0)
 
-    const r2 = await runHost({ db, repoRoot, remote: REMOTE, rsyncVersion: RSYNC_VERSION, rsyncFn, force: true })
+    const r2 = await runHost({
+      db,
+      repoRoot,
+      remote: REMOTE,
+      rsyncVersion: RSYNC_VERSION,
+      rsyncFn,
+      force: true,
+    })
     expect(r2.kind).toBe('skipped-empty')
     expect(rsyncCalls).toBe(1)
   }, 30_000)

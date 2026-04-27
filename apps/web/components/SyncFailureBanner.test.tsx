@@ -1,7 +1,7 @@
-// @vitest-environment jsdom
-import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
 import type { FailingHost } from '@/lib/queries/hosts'
+import { render, screen } from '@testing-library/react'
+// @vitest-environment jsdom
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Mock the query module so the banner doesn't hit a real DB.
 const { getFailingHostsMock, cookieMap } = vi.hoisted(() => ({
@@ -9,9 +9,7 @@ const { getFailingHostsMock, cookieMap } = vi.hoisted(() => ({
   cookieMap: new Map<string, string>(),
 }))
 vi.mock('@/lib/queries/hosts', async () => {
-  const actual = await vi.importActual<typeof import('@/lib/queries/hosts')>(
-    '@/lib/queries/hosts',
-  )
+  const actual = await vi.importActual<typeof import('@/lib/queries/hosts')>('@/lib/queries/hosts')
   return { ...actual, getFailingHosts: getFailingHostsMock }
 })
 

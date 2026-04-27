@@ -1,7 +1,7 @@
+import { closeDb, getDb, sessions } from '@cca/db'
 import { Command } from 'commander'
-import pc from 'picocolors'
-import { getDb, closeDb, sessions } from '@cca/db'
 import { and, desc, gte, ilike, sql } from 'drizzle-orm'
+import pc from 'picocolors'
 import { parseSince } from '../lib/since.js'
 
 export function sessionsCommand(): Command {
@@ -35,11 +35,17 @@ export function sessionsCommand(): Command {
         .orderBy(desc(sessions.startedAt))
         .limit(Number(opts.limit))
 
-      if (rows.length === 0) { console.log(pc.dim('no sessions found')); await closeDb(); return }
+      if (rows.length === 0) {
+        console.log(pc.dim('no sessions found'))
+        await closeDb()
+        return
+      }
 
       for (const r of rows) {
         const dot = r.status === 'active' ? pc.green('●') : pc.dim('○')
-        const when = r.startedAt ? new Date(r.startedAt).toISOString().slice(0, 19).replace('T', ' ') : '?'
+        const when = r.startedAt
+          ? new Date(r.startedAt).toISOString().slice(0, 19).replace('T', ' ')
+          : '?'
         const dur = r.durationSec ? `${Math.round(r.durationSec / 60)}m` : '?'
         const msgs = String(r.messageCount ?? 0).padStart(4)
         const tools = String(r.toolCallCount ?? 0).padStart(4)

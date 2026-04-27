@@ -1,13 +1,13 @@
 import { createHash } from 'node:crypto'
-import { readdir, readFile, stat } from 'node:fs/promises'
+import { readFile, readdir, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 
 export interface FileSnapshot {
   sessionId: string
-  filePath: string        // the hash key from CC (we don't recover original name here)
+  filePath: string // the hash key from CC (we don't recover original name here)
   version: number
   snapshotAt: Date
-  content: string | null  // null if binary
+  content: string | null // null if binary
   sha256: string
   sourceFile: string
 }

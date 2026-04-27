@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter, usePathname, useSearchParams } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 
 const COOKIE = 'cca-hosts'
@@ -44,7 +44,7 @@ export function HostFilter({
   }
 
   const isAll = !current || current.length === allHosts.length
-  const label = isAll ? 'host: all' : `host: ${current!.join(', ')}`
+  const label = isAll ? 'host: all' : `host: ${current?.join(', ')}`
 
   return (
     <div ref={ref} className="relative">

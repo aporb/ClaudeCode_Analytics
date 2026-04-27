@@ -1,24 +1,24 @@
-import { config } from 'dotenv'
 import { resolve } from 'node:path'
+import { config } from 'dotenv'
 config({ path: resolve(process.cwd(), '../../.env.local') })
 
-import { getDb, closeDb } from './client.js'
-import { modelPricing } from './schema/index.js'
 import { sql } from 'drizzle-orm'
+import { closeDb, getDb } from './client.js'
+import { modelPricing } from './schema/index.js'
 
 // Per Anthropic public pricing as of 2026-04 (USD per 1M tokens).
 // Cache write prices: 5m ephemeral = 1.25x input; 1h ephemeral = 2x input.
 // Update effective_from when you refresh these values.
 const EFFECTIVE_FROM = new Date('2026-01-01T00:00:00Z')
 const PRICES = [
-  { model: 'claude-opus-4-7',   input: 15,  output: 75, write5m: 18.75, write1h: 30, read: 1.5 },
+  { model: 'claude-opus-4-7', input: 15, output: 75, write5m: 18.75, write1h: 30, read: 1.5 },
   { model: 'claude-opus-4-7[1m]', input: 15, output: 75, write5m: 18.75, write1h: 30, read: 1.5 },
-  { model: 'claude-opus-4-6',   input: 15,  output: 75, write5m: 18.75, write1h: 30, read: 1.5 },
-  { model: 'claude-opus-4-5',   input: 15,  output: 75, write5m: 18.75, write1h: 30, read: 1.5 },
-  { model: 'claude-sonnet-4-6', input: 3,   output: 15, write5m: 3.75,  write1h: 6,  read: 0.3 },
-  { model: 'claude-sonnet-4-5', input: 3,   output: 15, write5m: 3.75,  write1h: 6,  read: 0.3 },
-  { model: 'claude-sonnet-4-0', input: 3,   output: 15, write5m: 3.75,  write1h: 6,  read: 0.3 },
-  { model: 'claude-haiku-4-5',  input: 1,   output: 5,  write5m: 1.25,  write1h: 2,  read: 0.1 },
+  { model: 'claude-opus-4-6', input: 15, output: 75, write5m: 18.75, write1h: 30, read: 1.5 },
+  { model: 'claude-opus-4-5', input: 15, output: 75, write5m: 18.75, write1h: 30, read: 1.5 },
+  { model: 'claude-sonnet-4-6', input: 3, output: 15, write5m: 3.75, write1h: 6, read: 0.3 },
+  { model: 'claude-sonnet-4-5', input: 3, output: 15, write5m: 3.75, write1h: 6, read: 0.3 },
+  { model: 'claude-sonnet-4-0', input: 3, output: 15, write5m: 3.75, write1h: 6, read: 0.3 },
+  { model: 'claude-haiku-4-5', input: 1, output: 5, write5m: 1.25, write1h: 2, read: 0.1 },
   { model: 'claude-haiku-4-5-20251001', input: 1, output: 5, write5m: 1.25, write1h: 2, read: 0.1 },
 ]
 
@@ -52,4 +52,7 @@ async function main() {
   await closeDb()
 }
 
-main().catch((e) => { console.error(e); process.exit(1) })
+main().catch((e) => {
+  console.error(e)
+  process.exit(1)
+})

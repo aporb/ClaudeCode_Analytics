@@ -1,8 +1,8 @@
+import { events, closeDb, getDb, sessions } from '@cca/db'
 import { Command } from 'commander'
-import pc from 'picocolors'
-import { getDb, closeDb, events, sessions } from '@cca/db'
 import { sql } from 'drizzle-orm'
-import { renderHostsTable, type HostRow } from '../lib/hostsTable.js'
+import pc from 'picocolors'
+import { type HostRow, renderHostsTable } from '../lib/hostsTable.js'
 
 export function statusCommand(): Command {
   return new Command('status')
@@ -29,7 +29,12 @@ export function statusCommand(): Command {
       try {
         const r = await fetch('http://localhost:9939/status', { signal: AbortSignal.timeout(1000) })
         if (!r.ok) throw new Error(`HTTP ${r.status}`)
-        const d = await r.json() as { ok: boolean; uptimeSec: number; subscribers: number; lastEventAt: string | null }
+        const d = (await r.json()) as {
+          ok: boolean
+          uptimeSec: number
+          subscribers: number
+          lastEventAt: string | null
+        }
         console.log(`  ${pc.green('●')} running`)
         console.log(`  uptime:           ${d.uptimeSec}s`)
         console.log(`  subscribers:      ${d.subscribers}`)
@@ -52,13 +57,15 @@ export function statusCommand(): Command {
           LEFT JOIN host_sync_state hss ON hss.host = e.host
         `)
         // drizzle's postgres-js execute returns an array of row objects.
-        const hostRows: HostRow[] = (rows as unknown as Array<{
-          host: string
-          events: string | number
-          last_pulled_at: string | Date | null
-          current_interval_hours: number | null
-          consecutive_errors: number | null
-        }>).map((r) => ({
+        const hostRows: HostRow[] = (
+          rows as unknown as Array<{
+            host: string
+            events: string | number
+            last_pulled_at: string | Date | null
+            current_interval_hours: number | null
+            consecutive_errors: number | null
+          }>
+        ).map((r) => ({
           host: r.host,
           events: Number(r.events),
           lastPulledAt: r.last_pulled_at ? new Date(r.last_pulled_at as string) : null,

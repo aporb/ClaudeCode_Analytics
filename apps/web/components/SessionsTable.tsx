@@ -1,6 +1,13 @@
-import Link from 'next/link'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { HostChip } from '@/components/HostChip'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import Link from 'next/link'
 
 interface Row {
   sessionId: string
@@ -24,7 +31,7 @@ export function SessionsTable({ rows }: { rows: Row[] }) {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead className="w-[20px]"></TableHead>
+          <TableHead className="w-[20px]" />
           <TableHead>when</TableHead>
           <TableHead>host</TableHead>
           <TableHead>dur</TableHead>
@@ -39,12 +46,18 @@ export function SessionsTable({ rows }: { rows: Row[] }) {
         {rows.map((r) => (
           <TableRow key={r.sessionId}>
             <TableCell>
-              <span className={r.status === 'active'
-                ? 'block size-2 rounded-full bg-emerald-500'
-                : 'block size-2 rounded-full bg-muted-foreground/20'} />
+              <span
+                className={
+                  r.status === 'active'
+                    ? 'block size-2 rounded-full bg-emerald-500'
+                    : 'block size-2 rounded-full bg-muted-foreground/20'
+                }
+              />
             </TableCell>
             <TableCell className="text-muted-foreground whitespace-nowrap">
-              {r.startedAt ? new Date(r.startedAt).toISOString().slice(0, 16).replace('T', ' ') : '—'}
+              {r.startedAt
+                ? new Date(r.startedAt).toISOString().slice(0, 16).replace('T', ' ')
+                : '—'}
             </TableCell>
             <TableCell>
               <HostChip host={r.host} />
@@ -68,7 +81,9 @@ export function SessionsTable({ rows }: { rows: Row[] }) {
             <TableCell className="text-muted-foreground truncate max-w-[400px]">
               <span className="text-foreground/70">{r.projectPath ?? '—'}</span>
               {r.firstPrompt && (
-                <span className="block truncate text-xs">{r.firstPrompt.replace(/\s+/g, ' ').slice(0, 120)}</span>
+                <span className="block truncate text-xs">
+                  {r.firstPrompt.replace(/\s+/g, ' ').slice(0, 120)}
+                </span>
               )}
             </TableCell>
           </TableRow>

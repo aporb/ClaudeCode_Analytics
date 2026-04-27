@@ -1,7 +1,7 @@
-import { cookies } from 'next/headers'
-import { resolveSince } from '@/lib/since'
 import { parseHosts } from '@/lib/hosts'
 import { getTokenTotals } from '@/lib/queries/cost'
+import { resolveSince } from '@/lib/since'
+import { cookies } from 'next/headers'
 
 /** Humanize a token count: 287_402_991 → "287.4M". Inline helper — no
  *  dependency on a humanize library. */
@@ -38,19 +38,25 @@ export async function TokenHeadline({
   return (
     <div className="border border-border rounded-md p-4">
       <div className="flex items-baseline gap-3">
-        <span className="text-xs uppercase tracking-wide text-muted-foreground">
-          Total tokens
-        </span>
+        <span className="text-xs uppercase tracking-wide text-muted-foreground">Total tokens</span>
         <span className="text-3xl font-bold leading-none tabular-nums">
           {humanizeCount(t.total)}
         </span>
         <span className="text-xs text-muted-foreground">· {window.label}</span>
       </div>
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground tabular-nums">
-        <span>In: <span className="text-foreground">{humanizeCount(t.input)}</span></span>
-        <span>Out: <span className="text-foreground">{humanizeCount(t.output)}</span></span>
-        <span>Cache create: <span className="text-foreground">{humanizeCount(t.cacheCreation)}</span></span>
-        <span>Read: <span className="text-foreground">{humanizeCount(t.cacheRead)}</span></span>
+        <span>
+          In: <span className="text-foreground">{humanizeCount(t.input)}</span>
+        </span>
+        <span>
+          Out: <span className="text-foreground">{humanizeCount(t.output)}</span>
+        </span>
+        <span>
+          Cache create: <span className="text-foreground">{humanizeCount(t.cacheCreation)}</span>
+        </span>
+        <span>
+          Read: <span className="text-foreground">{humanizeCount(t.cacheRead)}</span>
+        </span>
       </div>
     </div>
   )

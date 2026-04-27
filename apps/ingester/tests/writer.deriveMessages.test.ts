@@ -1,16 +1,16 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { config } from 'dotenv'
-import { resolve, dirname } from 'node:path'
+import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { config } from 'dotenv'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 config({ path: resolve(__dirname, '../../../.env.local') })
 
-import postgres from 'postgres'
-import { drizzle } from 'drizzle-orm/postgres-js'
-import { events, messages } from '@cca/db'
-import { insertEventsBatch } from '../src/writer/events.js'
-import { deriveMessagesFromEvents } from '../src/writer/deriveMessages.js'
 import type { ParsedEvent } from '@cca/core'
+import { events, messages } from '@cca/db'
+import { drizzle } from 'drizzle-orm/postgres-js'
+import postgres from 'postgres'
+import { deriveMessagesFromEvents } from '../src/writer/deriveMessages.js'
+import { insertEventsBatch } from '../src/writer/events.js'
 
 const TEST_URL = process.env.CCA_DATABASE_URL_TEST!
 const sql = postgres(TEST_URL, { max: 2 })
@@ -23,8 +23,14 @@ const assistantEvent: ParsedEvent = {
   type: 'assistant',
   subtype: 'assistant_message',
   timestamp: new Date('2026-04-01T00:00:00Z'),
-  cwd: null, projectPath: null, gitBranch: null, ccVersion: null, entrypoint: null,
-  isSidechain: false, agentId: null, requestId: 'req1',
+  cwd: null,
+  projectPath: null,
+  gitBranch: null,
+  ccVersion: null,
+  entrypoint: null,
+  isSidechain: false,
+  agentId: null,
+  requestId: 'req1',
   sourceFile: '/tmp/x.jsonl',
   payload: {
     uuid: '00000000-0000-0000-0000-000000000010',
@@ -49,7 +55,9 @@ describe('derive messages', () => {
   beforeAll(async () => {
     await sql`TRUNCATE events RESTART IDENTITY CASCADE`
   })
-  afterAll(async () => { await sql.end() })
+  afterAll(async () => {
+    await sql.end()
+  })
 
   it('inserts a message row with flattened text and usage', async () => {
     await insertEventsBatch(db, [assistantEvent], { host: 'local' })

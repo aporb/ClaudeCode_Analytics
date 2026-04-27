@@ -1,7 +1,7 @@
-import { describe, it, expect, afterEach } from 'vitest'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { afterEach, describe, expect, it } from 'vitest'
 import { withHostLock } from '../src/sync/lock.js'
 
 const createdDirs: string[] = []
@@ -52,8 +52,8 @@ describe('withHostLock — serializes concurrent invocations on the same mirror 
       'B:start',
       'B:end',
     ])
-    const aEnd = events.find((e) => e.who === 'A' && e.phase === 'end')!.t
-    const bStart = events.find((e) => e.who === 'B' && e.phase === 'start')!.t
+    const aEnd = events.find((e) => e.who === 'A' && e.phase === 'end')?.t
+    const bStart = events.find((e) => e.who === 'B' && e.phase === 'start')?.t
     // Allow a small fudge factor; B must not start before A ends.
     expect(bStart).toBeGreaterThanOrEqual(aEnd - 5)
   }, 15_000)

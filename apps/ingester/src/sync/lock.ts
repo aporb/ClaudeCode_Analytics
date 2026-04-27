@@ -13,10 +13,7 @@ import { lock } from 'proper-lockfile'
  * The retry budget (~30 retries, 1–5 s) covers a long-running rsync window
  * without surfacing transient EEXIST errors to the caller.
  */
-export async function withHostLock<T>(
-  mirrorDir: string,
-  fn: () => Promise<T>,
-): Promise<T> {
+export async function withHostLock<T>(mirrorDir: string, fn: () => Promise<T>): Promise<T> {
   mkdirSync(mirrorDir, { recursive: true })
   const lockPath = path.join(mirrorDir, '.lock')
   // Ensure the sentinel exists — proper-lockfile requires the target file to exist.

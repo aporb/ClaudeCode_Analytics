@@ -1,12 +1,16 @@
-import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
-import { sql, inArray } from 'drizzle-orm'
+import type { ParsedEvent } from '@cca/core'
 import { messages } from '@cca/db'
 import type * as schema from '@cca/db/schema'
-import type { ParsedEvent } from '@cca/core'
+import { inArray, sql } from 'drizzle-orm'
+import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 
 type Db = PostgresJsDatabase<typeof schema>
 
-interface FlatBlock { type: string; text?: string; content?: unknown }
+interface FlatBlock {
+  type: string
+  text?: string
+  content?: unknown
+}
 
 function flattenTextContent(content: unknown): string {
   if (typeof content === 'string') return content
@@ -26,17 +30,27 @@ function flattenTextContent(content: unknown): string {
   return parts.join('\n')
 }
 
-export async function deriveMessagesFromEvents(db: Db, batch: ParsedEvent[], opts: { host: string }): Promise<number> {
+export async function deriveMessagesFromEvents(
+  db: Db,
+  batch: ParsedEvent[],
+  opts: { host: string },
+): Promise<number> {
   const rows: Array<typeof messages.$inferInsert> = []
   for (const e of batch) {
     if (e.type !== 'assistant' && e.type !== 'user') continue
-    const payload = e.payload as { message?: {
-      role?: string; content?: unknown; model?: string;
-      usage?: {
-        input_tokens?: number; output_tokens?: number;
-        cache_creation_input_tokens?: number; cache_read_input_tokens?: number;
+    const payload = e.payload as {
+      message?: {
+        role?: string
+        content?: unknown
+        model?: string
+        usage?: {
+          input_tokens?: number
+          output_tokens?: number
+          cache_creation_input_tokens?: number
+          cache_read_input_tokens?: number
+        }
       }
-    } }
+    }
     const msg = payload.message
     if (!msg) continue
     const role = msg.role === 'assistant' ? 'assistant' : 'user'

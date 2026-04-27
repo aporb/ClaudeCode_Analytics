@@ -1,13 +1,13 @@
-import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest'
-import { resolve, dirname } from 'node:path'
+import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { config } from 'dotenv'
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 config({ path: resolve(__dirname, '../../../.env.local') })
 
-import postgres from 'postgres'
 import { closeDb, getDb } from '@cca/db'
-import { loadState, upsertState, resetState, listAllStates } from '../src/sync/state.js'
+import postgres from 'postgres'
+import { listAllStates, loadState, resetState, upsertState } from '../src/sync/state.js'
 
 const TEST_URL = process.env.CCA_DATABASE_URL_TEST!
 

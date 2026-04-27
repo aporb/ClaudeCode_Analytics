@@ -1,6 +1,8 @@
 import type { CostKpis } from '@/lib/queries/cost'
 
-function fmtUsd(n: number): string { return n < 0.01 ? '$0.00' : `$${n.toFixed(2)}` }
+function fmtUsd(n: number): string {
+  return n < 0.01 ? '$0.00' : `$${n.toFixed(2)}`
+}
 
 function deltaUsd(curr: number, prior: number): { text: string; cls: string } {
   if (!Number.isFinite(prior) || prior === 0) return { text: '—', cls: 'opacity-60' }
@@ -28,21 +30,40 @@ export function KpiStrip({ kpis, todayPrior }: { kpis: CostKpis; todayPrior: num
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
       <Cell label="Today" value={fmtUsd(kpis.todayCost)} delta={todayDelta} sub="vs yesterday" />
       <Cell label="Window" value={fmtUsd(kpis.windowCost)} delta={winDelta} sub="vs prior period" />
-      <Cell label="Cache hit" value={`${Math.round(kpis.cacheHitPct * 100)}%`} delta={cacheDelta} sub="vs prior" />
-      <Cell label="Top model"
+      <Cell
+        label="Cache hit"
+        value={`${Math.round(kpis.cacheHitPct * 100)}%`}
+        delta={cacheDelta}
+        sub="vs prior"
+      />
+      <Cell
+        label="Top model"
         value={kpis.topModel ? kpis.topModel.model.replace(/^claude-/, '') : '—'}
         delta={modelDelta}
-        sub={kpis.topModel ? `${Math.round(kpis.topModel.pctOfCost * 100)}% of cost` : ''} />
-      <Cell label="Active sessions" value={String(kpis.activeSessions.count)}
+        sub={kpis.topModel ? `${Math.round(kpis.topModel.pctOfCost * 100)}% of cost` : ''}
+      />
+      <Cell
+        label="Active sessions"
+        value={String(kpis.activeSessions.count)}
         delta={{ text: '', cls: '' }}
-        sub={kpis.activeSessions.sample
-          .map((s) => s.projectPath?.replace(/^\/Users\/[^/]+\//, '~/') ?? s.sessionId.slice(0, 6))
-          .join(' · ') || 'none'} />
+        sub={
+          kpis.activeSessions.sample
+            .map(
+              (s) => s.projectPath?.replace(/^\/Users\/[^/]+\//, '~/') ?? s.sessionId.slice(0, 6),
+            )
+            .join(' · ') || 'none'
+        }
+      />
     </div>
   )
 }
 
-function Cell({ label, value, delta, sub }: { label: string; value: string; delta: { text: string; cls: string }; sub: string }) {
+function Cell({
+  label,
+  value,
+  delta,
+  sub,
+}: { label: string; value: string; delta: { text: string; cls: string }; sub: string }) {
   return (
     <div className="border border-border rounded-md p-3">
       <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>

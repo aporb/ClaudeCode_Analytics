@@ -1,7 +1,7 @@
+import { closeDb, getDb } from '@cca/db'
 import { Command } from 'commander'
-import pc from 'picocolors'
-import { getDb, closeDb } from '@cca/db'
 import { sql } from 'drizzle-orm'
+import pc from 'picocolors'
 import { parseSince } from '../lib/since.js'
 
 interface Row {
@@ -38,13 +38,17 @@ export function searchCommand(): Command {
         LEFT JOIN sessions s USING (session_id)
         WHERE m.text_tsv @@ plainto_tsquery('english', ${query})
           ${since ? sql`AND m.timestamp >= ${since}` : sql``}
-          ${opts.project ? sql`AND s.project_path ILIKE ${'%' + opts.project + '%'}` : sql``}
+          ${opts.project ? sql`AND s.project_path ILIKE ${`%${opts.project}%`}` : sql``}
         ORDER BY rank DESC, m.timestamp DESC
         LIMIT ${Number(opts.limit)}
       `)
 
       const results = rows as unknown as Row[]
-      if (results.length === 0) { console.log(pc.dim('no matches')); await closeDb(); return }
+      if (results.length === 0) {
+        console.log(pc.dim('no matches'))
+        await closeDb()
+        return
+      }
 
       for (const r of results) {
         const when = new Date(r.timestamp).toISOString().slice(0, 19).replace('T', ' ')

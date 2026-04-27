@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { calculateCost, type ModelPricing, type TokenUsage } from '../src/cost.js'
+import { describe, expect, it } from 'vitest'
+import { type ModelPricing, type TokenUsage, calculateCost } from '../src/cost.js'
 
 const sonnetPricing: ModelPricing = {
   inputPerMtok: 3,
@@ -37,7 +37,13 @@ describe('cost', () => {
   it('returns 0 for zero tokens', () => {
     expect(
       calculateCost(
-        { inputTokens: 0, outputTokens: 0, cacheCreation5mTokens: 0, cacheCreation1hTokens: 0, cacheReadTokens: 0 },
+        {
+          inputTokens: 0,
+          outputTokens: 0,
+          cacheCreation5mTokens: 0,
+          cacheCreation1hTokens: 0,
+          cacheReadTokens: 0,
+        },
         sonnetPricing,
       ),
     ).toBe(0)

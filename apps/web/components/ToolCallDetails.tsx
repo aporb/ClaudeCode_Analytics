@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-import { cn } from '@/lib/utils'
 import { applyRedactionDeep } from '@/lib/redaction'
+import { cn } from '@/lib/utils'
+import { useState } from 'react'
 
 interface ToolCall {
   uuid: string
@@ -27,7 +27,8 @@ export function ToolCallDetails({ call, raw }: { call: ToolCall; raw: boolean })
           call.isError && 'text-destructive hover:text-destructive',
         )}
       >
-        {open ? '▾' : '▸'} {call.toolName} details {call.durationMs != null ? `(${call.durationMs}ms)` : ''}
+        {open ? '▾' : '▸'} {call.toolName} details{' '}
+        {call.durationMs != null ? `(${call.durationMs}ms)` : ''}
       </button>
       {open && (
         <pre className="mt-1 p-3 rounded bg-muted/50 overflow-x-auto whitespace-pre-wrap break-words">
@@ -35,9 +36,13 @@ export function ToolCallDetails({ call, raw }: { call: ToolCall; raw: boolean })
           <div>{JSON.stringify(redactedInput, null, 2)}</div>
           {redactedResult != null && (
             <>
-              <div className="text-muted-foreground mt-3 mb-1">result{call.isError ? ' (error)' : ''}:</div>
+              <div className="text-muted-foreground mt-3 mb-1">
+                result{call.isError ? ' (error)' : ''}:
+              </div>
               <div>
-                {typeof redactedResult === 'string' ? redactedResult : JSON.stringify(redactedResult, null, 2)}
+                {typeof redactedResult === 'string'
+                  ? redactedResult
+                  : JSON.stringify(redactedResult, null, 2)}
               </div>
             </>
           )}

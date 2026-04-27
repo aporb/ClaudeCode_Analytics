@@ -1,10 +1,13 @@
 import 'server-only'
-import { getDb } from '../db'
 import { sql } from 'drizzle-orm'
+import { getDb } from '../db'
 
 /** Build a Postgres ARRAY[…]::text[] SQL chunk from a JS string array. */
 function pgTextArray(values: string[]) {
-  return sql`ARRAY[${sql.join(values.map((v) => sql`${v}`), sql`, `)}]::text[]`
+  return sql`ARRAY[${sql.join(
+    values.map((v) => sql`${v}`),
+    sql`, `,
+  )}]::text[]`
 }
 
 export interface SearchQuery {
@@ -24,8 +27,14 @@ export async function ftsSearch(args: SearchQuery) {
   const sinceStart = args.since?.start.toISOString()
   const sinceEnd = args.since?.end.toISOString()
   const rows = await db.execute<{
-    session_id: string; timestamp: string; role: string; project_path: string | null
-    snippet: string; cost: string | null; uuid: string; host: string
+    session_id: string
+    timestamp: string
+    role: string
+    project_path: string | null
+    snippet: string
+    cost: string | null
+    uuid: string
+    host: string
   }>(sql`
     SELECT
       m.uuid,
@@ -41,7 +50,7 @@ export async function ftsSearch(args: SearchQuery) {
     JOIN sessions s ON s.session_id = m.session_id
     WHERE m.text_tsv @@ plainto_tsquery('english', ${args.q})
       ${args.role ? sql`AND m.role = ${args.role}` : sql``}
-      ${args.project ? sql`AND s.project_path ILIKE ${'%' + args.project + '%'}` : sql``}
+      ${args.project ? sql`AND s.project_path ILIKE ${`%${args.project}%`}` : sql``}
       ${sinceStart && sinceEnd ? sql`AND m.timestamp >= ${sinceStart}::timestamptz AND m.timestamp <= ${sinceEnd}::timestamptz` : sql``}
       ${args.models?.length ? sql`AND m.model = ANY(${pgTextArray(args.models)})` : sql``}
       ${args.hosts && args.hosts.length > 0 ? sql`AND s.host = ANY(${pgTextArray(args.hosts)})` : sql``}
@@ -49,10 +58,18 @@ export async function ftsSearch(args: SearchQuery) {
     LIMIT ${args.limit ?? 50}
     OFFSET ${args.offset ?? 0}
   `)
-  return (rows as unknown as Array<{
-    session_id: string; timestamp: string; role: string; project_path: string | null
-    snippet: string; cost: string | null; uuid: string; host: string
-  }>).map((r) => ({
+  return (
+    rows as unknown as Array<{
+      session_id: string
+      timestamp: string
+      role: string
+      project_path: string | null
+      snippet: string
+      cost: string | null
+      uuid: string
+      host: string
+    }>
+  ).map((r) => ({
     sessionId: r.session_id,
     uuid: r.uuid,
     timestamp: new Date(r.timestamp).toISOString(),
@@ -64,7 +81,9 @@ export async function ftsSearch(args: SearchQuery) {
   }))
 }
 
-export async function countSearchResults(args: Omit<SearchQuery, 'limit' | 'offset'>): Promise<number> {
+export async function countSearchResults(
+  args: Omit<SearchQuery, 'limit' | 'offset'>,
+): Promise<number> {
   const db = getDb()
   const sinceStart = args.since?.start.toISOString()
   const sinceEnd = args.since?.end.toISOString()
@@ -73,7 +92,7 @@ export async function countSearchResults(args: Omit<SearchQuery, 'limit' | 'offs
     JOIN sessions s ON s.session_id = m.session_id
     WHERE m.text_tsv @@ plainto_tsquery('english', ${args.q})
       ${args.role ? sql`AND m.role = ${args.role}` : sql``}
-      ${args.project ? sql`AND s.project_path ILIKE ${'%' + args.project + '%'}` : sql``}
+      ${args.project ? sql`AND s.project_path ILIKE ${`%${args.project}%`}` : sql``}
       ${sinceStart && sinceEnd ? sql`AND m.timestamp >= ${sinceStart}::timestamptz AND m.timestamp <= ${sinceEnd}::timestamptz` : sql``}
       ${args.models?.length ? sql`AND m.model = ANY(${pgTextArray(args.models)})` : sql``}
       ${args.hosts && args.hosts.length > 0 ? sql`AND s.host = ANY(${pgTextArray(args.hosts)})` : sql``}

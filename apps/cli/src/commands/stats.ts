@@ -1,12 +1,25 @@
+import { closeDb, getDb } from '@cca/db'
 import { Command } from 'commander'
-import pc from 'picocolors'
-import { getDb, closeDb } from '@cca/db'
 import { sql } from 'drizzle-orm'
+import pc from 'picocolors'
 import { parseSince } from '../lib/since.js'
 
-interface ModelRow { model: string; in_tok: number; out_tok: number; cost: number }
-interface ProjectRow { project_path: string | null; sessions: number; cost: number }
-interface ToolRow { tool_name: string; calls: number; errors: number }
+interface ModelRow {
+  model: string
+  in_tok: number
+  out_tok: number
+  cost: number
+}
+interface ProjectRow {
+  project_path: string | null
+  sessions: number
+  cost: number
+}
+interface ToolRow {
+  tool_name: string
+  calls: number
+  errors: number
+}
 
 export function statsCommand(): Command {
   return new Command('stats')
@@ -42,18 +55,25 @@ export function statsCommand(): Command {
 
       console.log(pc.bold(`\nTop models since ${opts.since}`))
       for (const m of models as unknown as ModelRow[]) {
-        console.log(`  ${m.model.padEnd(36)} in=${Number(m.in_tok).toLocaleString().padStart(12)}  out=${Number(m.out_tok).toLocaleString().padStart(10)}  $${Number(m.cost).toFixed(2)}`)
+        console.log(
+          `  ${m.model.padEnd(36)} in=${Number(m.in_tok).toLocaleString().padStart(12)}  out=${Number(m.out_tok).toLocaleString().padStart(10)}  $${Number(m.cost).toFixed(2)}`,
+        )
       }
 
       console.log(pc.bold(`\nTop projects since ${opts.since}`))
       for (const p of projects as unknown as ProjectRow[]) {
-        console.log(`  ${(p.project_path ?? '(none)').padEnd(60)} ${String(p.sessions).padStart(4)} sessions  $${Number(p.cost ?? 0).toFixed(2)}`)
+        console.log(
+          `  ${(p.project_path ?? '(none)').padEnd(60)} ${String(p.sessions).padStart(4)} sessions  $${Number(p.cost ?? 0).toFixed(2)}`,
+        )
       }
 
       console.log(pc.bold(`\nTop tools since ${opts.since}`))
       for (const t of tools as unknown as ToolRow[]) {
-        const errRate = t.calls > 0 ? ((Number(t.errors) / Number(t.calls)) * 100).toFixed(1) : '0.0'
-        console.log(`  ${t.tool_name.padEnd(16)} calls=${String(t.calls).padStart(6)}  errors=${String(t.errors).padStart(4)} (${errRate}%)`)
+        const errRate =
+          t.calls > 0 ? ((Number(t.errors) / Number(t.calls)) * 100).toFixed(1) : '0.0'
+        console.log(
+          `  ${t.tool_name.padEnd(16)} calls=${String(t.calls).padStart(6)}  errors=${String(t.errors).padStart(4)} (${errRate}%)`,
+        )
       }
 
       await closeDb()

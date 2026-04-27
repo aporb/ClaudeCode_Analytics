@@ -1,9 +1,9 @@
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { closeDb } from '@cca/db'
+import { resetHostState, runSync } from '@cca/ingester/sync'
 import { Command } from 'commander'
 import pc from 'picocolors'
-import { closeDb } from '@cca/db'
-import { runSync, resetHostState } from '@cca/ingester/sync'
 
 export function syncCommand(): Command {
   return new Command('sync')

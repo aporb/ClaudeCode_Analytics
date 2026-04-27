@@ -8,7 +8,9 @@ export interface BriefingInput {
   isPartialDay: boolean
 }
 
-export interface Briefing { lines: string[] }
+export interface Briefing {
+  lines: string[]
+}
 
 function fmtUsd(n: number): string {
   if (!Number.isFinite(n)) return '—'
@@ -48,16 +50,22 @@ export function computeBriefing(i: BriefingInput): Briefing {
   const lines: string[] = []
   const noun = i.isPartialDay ? 'today so far' : i.windowLabel.toLowerCase().replace(/^last /, '')
   if (Number.isFinite(i.windowCostPriorPeriod) && i.windowCostPriorPeriod > 0) {
-    lines.push(`Burn ${fmtUsd(i.windowCost)} ${noun}, ${fmtDeltaPct(i.windowCost, i.windowCostPriorPeriod)} vs prior period.`)
+    lines.push(
+      `Burn ${fmtUsd(i.windowCost)} ${noun}, ${fmtDeltaPct(i.windowCost, i.windowCostPriorPeriod)} vs prior period.`,
+    )
   } else if (!Number.isFinite(i.windowCostPriorPeriod)) {
     lines.push(`Burn ${fmtUsd(i.windowCost)} ${noun} (vs prior: —).`)
   } else {
     lines.push(`Burn ${fmtUsd(i.windowCost)} ${noun}.`)
   }
   if (i.topProject) {
-    lines.push(`Largest contributor: ${i.topProject.project} on ${modelDisplay(i.topProject.model)} (${fmtUsd(i.topProject.cost)}).`)
+    lines.push(
+      `Largest contributor: ${i.topProject.project} on ${modelDisplay(i.topProject.model)} (${fmtUsd(i.topProject.cost)}).`,
+    )
   }
-  lines.push(`Cache hit ${fmtPct(i.cacheHitPct)} (${fmtDeltaPp(i.cacheHitPct, i.cacheHitPctPrior)} from prior).`)
+  lines.push(
+    `Cache hit ${fmtPct(i.cacheHitPct)} (${fmtDeltaPp(i.cacheHitPct, i.cacheHitPctPrior)} from prior).`,
+  )
   return { lines }
 }
 

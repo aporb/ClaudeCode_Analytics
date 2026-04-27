@@ -7,10 +7,7 @@ export interface DeltaLine {
   error?: Error
 }
 
-export async function* readDelta(
-  file: string,
-  startOffset: number,
-): AsyncGenerator<DeltaLine> {
+export async function* readDelta(file: string, startOffset: number): AsyncGenerator<DeltaLine> {
   for await (const item of readJsonlLines(file, { startOffset })) {
     yield {
       value: item.value,

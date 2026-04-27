@@ -2,14 +2,14 @@ import path from 'node:path'
 import { getDb } from '@cca/db'
 import { loadRemotesConfig } from './config.js'
 import { detectInstalledRsyncVersion } from './rsync.js'
-import { runHost, type RunHostResult } from './runHost.js'
+import { type RunHostResult, runHost } from './runHost.js'
 import { resetState } from './state.js'
 
 export interface RunSyncOptions {
   repoRoot: string
   configPath?: string
   force?: boolean
-  host?: string  // optional: limit to one host
+  host?: string // optional: limit to one host
 }
 
 export async function runSync(opts: RunSyncOptions): Promise<RunHostResult[]> {

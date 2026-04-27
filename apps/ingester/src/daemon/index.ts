@@ -1,8 +1,8 @@
-import { getDb, closeDb } from '@cca/db'
-import { Broadcaster } from './broadcaster.js'
-import { startTailer } from './tailer.js'
-import { startServer } from './server.js'
+import { closeDb, getDb } from '@cca/db'
 import pc from 'picocolors'
+import { Broadcaster } from './broadcaster.js'
+import { startServer } from './server.js'
+import { startTailer } from './tailer.js'
 
 export interface DaemonOptions {
   claudeHome: string
@@ -33,8 +33,14 @@ export async function startDaemon(opts: DaemonOptions): Promise<Daemon> {
     await closeDb()
   }
 
-  process.on('SIGINT', async () => { await shutdown(); process.exit(0) })
-  process.on('SIGTERM', async () => { await shutdown(); process.exit(0) })
+  process.on('SIGINT', async () => {
+    await shutdown()
+    process.exit(0)
+  })
+  process.on('SIGTERM', async () => {
+    await shutdown()
+    process.exit(0)
+  })
 
   console.log(pc.green('[cca daemon] ready'))
   return { stop: shutdown }

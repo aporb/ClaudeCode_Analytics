@@ -11,7 +11,9 @@ export function CostDistributionCard({
   ] as const
   return (
     <div className="border border-border rounded-md p-4">
-      <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Cost distribution</div>
+      <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
+        Cost distribution
+      </div>
       {rows.map(([k, v]) => (
         <div key={k} className="flex justify-between py-1 border-b border-border last:border-0">
           <span className="text-sm text-muted-foreground">{k}</span>

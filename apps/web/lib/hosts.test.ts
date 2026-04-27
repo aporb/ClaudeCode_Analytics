@@ -6,10 +6,15 @@ describe('parseHosts', () => {
     expect(parseHosts({ searchParams: {}, cookieValue: null })).toBeNull()
   })
   it('parses single host', () => {
-    expect(parseHosts({ searchParams: { host: 'hostinger' }, cookieValue: null })).toEqual(['hostinger'])
+    expect(parseHosts({ searchParams: { host: 'hostinger' }, cookieValue: null })).toEqual([
+      'hostinger',
+    ])
   })
   it('parses comma-separated hosts', () => {
-    expect(parseHosts({ searchParams: { host: 'hostinger,local' }, cookieValue: null })).toEqual(['hostinger', 'local'])
+    expect(parseHosts({ searchParams: { host: 'hostinger,local' }, cookieValue: null })).toEqual([
+      'hostinger',
+      'local',
+    ])
   })
   it('falls back to cookie when no URL param', () => {
     expect(parseHosts({ searchParams: {}, cookieValue: 'picoclaw' })).toEqual(['picoclaw'])

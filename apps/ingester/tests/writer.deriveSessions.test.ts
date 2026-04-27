@@ -1,17 +1,17 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { config } from 'dotenv'
-import { resolve, dirname } from 'node:path'
+import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { config } from 'dotenv'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 config({ path: resolve(__dirname, '../../../.env.local') })
 
-import postgres from 'postgres'
-import { drizzle } from 'drizzle-orm/postgres-js'
+import type { ParsedEvent } from '@cca/core'
 import * as schema from '@cca/db/schema'
-import { insertEventsBatch } from '../src/writer/events.js'
+import { drizzle } from 'drizzle-orm/postgres-js'
+import postgres from 'postgres'
 import { deriveMessagesFromEvents } from '../src/writer/deriveMessages.js'
 import { rollupSessions } from '../src/writer/deriveSessions.js'
-import type { ParsedEvent } from '@cca/core'
+import { insertEventsBatch } from '../src/writer/events.js'
 
 const TEST_URL = process.env.CCA_DATABASE_URL_TEST!
 const sql = postgres(TEST_URL, { max: 2 })
@@ -30,26 +30,58 @@ describe('rollup sessions', () => {
         output_per_mtok = EXCLUDED.output_per_mtok
     `
   })
-  afterAll(async () => { await sql.end() })
+  afterAll(async () => {
+    await sql.end()
+  })
 
   it('produces a session row with counts, tokens, and cost', async () => {
     const e1: ParsedEvent = {
-      uuid: '00000000-0000-0000-0000-000000009001', sessionId: 's-roll', parentUuid: null,
-      type: 'user', subtype: 'user_message', timestamp: new Date('2026-04-01T00:00:00Z'),
-      cwd: '/p', projectPath: '/p', gitBranch: 'main', ccVersion: '2.1.81', entrypoint: 'cli',
-      isSidechain: false, agentId: null, requestId: null, sourceFile: '/x',
+      uuid: '00000000-0000-0000-0000-000000009001',
+      sessionId: 's-roll',
+      parentUuid: null,
+      type: 'user',
+      subtype: 'user_message',
+      timestamp: new Date('2026-04-01T00:00:00Z'),
+      cwd: '/p',
+      projectPath: '/p',
+      gitBranch: 'main',
+      ccVersion: '2.1.81',
+      entrypoint: 'cli',
+      isSidechain: false,
+      agentId: null,
+      requestId: null,
+      sourceFile: '/x',
       payload: { message: { role: 'user', content: 'first prompt' } },
     }
     const e2: ParsedEvent = {
-      uuid: '00000000-0000-0000-0000-000000009002', sessionId: 's-roll', parentUuid: e1.uuid,
-      type: 'assistant', subtype: 'assistant_message', timestamp: new Date('2026-04-01T00:01:00Z'),
-      cwd: '/p', projectPath: '/p', gitBranch: 'main', ccVersion: '2.1.81', entrypoint: 'cli',
-      isSidechain: false, agentId: null, requestId: null, sourceFile: '/x',
-      payload: { message: {
-        role: 'assistant', model: 'claude-sonnet-4-6',
-        content: [{ type: 'text', text: 'ok' }],
-        usage: { input_tokens: 1_000_000, output_tokens: 500_000, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
-      }},
+      uuid: '00000000-0000-0000-0000-000000009002',
+      sessionId: 's-roll',
+      parentUuid: e1.uuid,
+      type: 'assistant',
+      subtype: 'assistant_message',
+      timestamp: new Date('2026-04-01T00:01:00Z'),
+      cwd: '/p',
+      projectPath: '/p',
+      gitBranch: 'main',
+      ccVersion: '2.1.81',
+      entrypoint: 'cli',
+      isSidechain: false,
+      agentId: null,
+      requestId: null,
+      sourceFile: '/x',
+      payload: {
+        message: {
+          role: 'assistant',
+          model: 'claude-sonnet-4-6',
+          content: [{ type: 'text', text: 'ok' }],
+          usage: {
+            input_tokens: 1_000_000,
+            output_tokens: 500_000,
+            cache_creation_input_tokens: 0,
+            cache_read_input_tokens: 0,
+          },
+        },
+      },
     }
     await insertEventsBatch(db, [e1, e2], { host: 'local' })
     await deriveMessagesFromEvents(db, [e1, e2], { host: 'local' })
@@ -70,22 +102,52 @@ describe('rollup sessions', () => {
     await sql`DELETE FROM sessions WHERE session_id = 's-roll-host'`
 
     const e1: ParsedEvent = {
-      uuid: '00000000-0000-0000-0000-000000009101', sessionId: 's-roll-host', parentUuid: null,
-      type: 'user', subtype: 'user_message', timestamp: new Date('2026-04-02T00:00:00Z'),
-      cwd: '/p', projectPath: '/p', gitBranch: 'main', ccVersion: '2.1.81', entrypoint: 'cli',
-      isSidechain: false, agentId: null, requestId: null, sourceFile: '/x',
+      uuid: '00000000-0000-0000-0000-000000009101',
+      sessionId: 's-roll-host',
+      parentUuid: null,
+      type: 'user',
+      subtype: 'user_message',
+      timestamp: new Date('2026-04-02T00:00:00Z'),
+      cwd: '/p',
+      projectPath: '/p',
+      gitBranch: 'main',
+      ccVersion: '2.1.81',
+      entrypoint: 'cli',
+      isSidechain: false,
+      agentId: null,
+      requestId: null,
+      sourceFile: '/x',
       payload: { message: { role: 'user', content: 'hi' } },
     }
     const e2: ParsedEvent = {
-      uuid: '00000000-0000-0000-0000-000000009102', sessionId: 's-roll-host', parentUuid: e1.uuid,
-      type: 'assistant', subtype: 'assistant_message', timestamp: new Date('2026-04-02T00:01:00Z'),
-      cwd: '/p', projectPath: '/p', gitBranch: 'main', ccVersion: '2.1.81', entrypoint: 'cli',
-      isSidechain: false, agentId: null, requestId: null, sourceFile: '/x',
-      payload: { message: {
-        role: 'assistant', model: 'claude-sonnet-4-6',
-        content: [{ type: 'text', text: 'ok' }],
-        usage: { input_tokens: 100, output_tokens: 50, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
-      }},
+      uuid: '00000000-0000-0000-0000-000000009102',
+      sessionId: 's-roll-host',
+      parentUuid: e1.uuid,
+      type: 'assistant',
+      subtype: 'assistant_message',
+      timestamp: new Date('2026-04-02T00:01:00Z'),
+      cwd: '/p',
+      projectPath: '/p',
+      gitBranch: 'main',
+      ccVersion: '2.1.81',
+      entrypoint: 'cli',
+      isSidechain: false,
+      agentId: null,
+      requestId: null,
+      sourceFile: '/x',
+      payload: {
+        message: {
+          role: 'assistant',
+          model: 'claude-sonnet-4-6',
+          content: [{ type: 'text', text: 'ok' }],
+          usage: {
+            input_tokens: 100,
+            output_tokens: 50,
+            cache_creation_input_tokens: 0,
+            cache_read_input_tokens: 0,
+          },
+        },
+      },
     }
     await insertEventsBatch(db, [e1, e2], { host: 'hostinger' })
     await deriveMessagesFromEvents(db, [e1, e2], { host: 'hostinger' })

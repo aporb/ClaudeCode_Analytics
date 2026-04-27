@@ -1,5 +1,5 @@
+import { type FailingHost, getFailingHosts } from '@/lib/queries/hosts'
 import { cookies } from 'next/headers'
-import { getFailingHosts, type FailingHost } from '@/lib/queries/hosts'
 import { DismissBannerButton } from './DismissBannerButton'
 
 /**
@@ -34,7 +34,11 @@ export async function SyncFailureBanner() {
   if (visible.length === 0) return null
 
   return (
-    <div role="alert" aria-live="polite" className="border-b border-destructive/40 bg-destructive/10">
+    <div
+      role="alert"
+      aria-live="polite"
+      className="border-b border-destructive/40 bg-destructive/10"
+    >
       <div className="max-w-7xl mx-auto px-6 py-2 flex flex-col gap-1">
         {visible.map((h) => (
           <SyncFailureRow key={h.host} host={h} />
@@ -50,8 +54,14 @@ function SyncFailureRow({ host }: { host: FailingHost }) {
     <div className="flex items-center gap-3 text-sm text-destructive">
       <span aria-hidden="true">⚠</span>
       <span className="font-mono flex-1 min-w-0 truncate">
-        Sync failing for <strong className="font-semibold">{host.host}</strong> ({host.consecutiveErrors} consecutive errors).
-        {summary ? <> Last error: <span className="text-destructive/80">{summary}</span></> : null}
+        Sync failing for <strong className="font-semibold">{host.host}</strong> (
+        {host.consecutiveErrors} consecutive errors).
+        {summary ? (
+          <>
+            {' '}
+            Last error: <span className="text-destructive/80">{summary}</span>
+          </>
+        ) : null}
       </span>
       <DismissBannerButton host={host.host} errorCount={host.consecutiveErrors} />
     </div>
@@ -63,5 +73,5 @@ function summariseError(err: string | null): string | null {
   if (!err) return null
   const firstLine = err.split('\n', 1)[0]?.trim() ?? ''
   if (!firstLine) return null
-  return firstLine.length > 140 ? firstLine.slice(0, 137) + '…' : firstLine
+  return firstLine.length > 140 ? `${firstLine.slice(0, 137)}…` : firstLine
 }

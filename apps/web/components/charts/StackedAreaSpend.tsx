@@ -1,8 +1,21 @@
 'use client'
 
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts'
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts'
 
-interface Row { day: string; model: string; cost: number }
+interface Row {
+  day: string
+  model: string
+  cost: number
+}
 
 function modelHsl(model: string): string {
   if (model.includes('opus')) return 'hsl(var(--model-opus))'
@@ -32,9 +45,16 @@ export function StackedAreaSpend({ rows }: { rows: Row[] }) {
           <Tooltip formatter={(v: number) => `$${v.toFixed(2)}`} />
           <Legend wrapperStyle={{ fontSize: 11 }} />
           {models.map((m) => (
-            <Area key={m} type="monotone" dataKey={m} stackId="1"
-              stroke={modelHsl(m)} fill={modelHsl(m)} fillOpacity={0.6}
-              name={m.replace(/^claude-/, '').replace(/-\d+$/, '')} />
+            <Area
+              key={m}
+              type="monotone"
+              dataKey={m}
+              stackId="1"
+              stroke={modelHsl(m)}
+              fill={modelHsl(m)}
+              fillOpacity={0.6}
+              name={m.replace(/^claude-/, '').replace(/-\d+$/, '')}
+            />
           ))}
         </AreaChart>
       </ResponsiveContainer>

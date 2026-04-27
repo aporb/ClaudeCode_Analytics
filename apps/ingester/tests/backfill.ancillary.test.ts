@@ -1,17 +1,18 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { config } from 'dotenv'
-import { resolve, dirname } from 'node:path'
+import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { config } from 'dotenv'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 config({ path: resolve(__dirname, '../../../.env.local') })
 
-import postgres from 'postgres'
+import { fileSnapshots, promptsHistory, shellSnapshots, todos as todosTable } from '@cca/db'
 import { drizzle } from 'drizzle-orm/postgres-js'
+import postgres from 'postgres'
 import {
-  promptsHistory, todos as todosTable, fileSnapshots, shellSnapshots,
-} from '@cca/db'
-import {
-  ingestHistory, ingestTodos, ingestFileHistory, ingestShellSnapshots,
+  ingestFileHistory,
+  ingestHistory,
+  ingestShellSnapshots,
+  ingestTodos,
 } from '../src/backfill/ancillary.js'
 
 const TEST_URL = process.env.CCA_DATABASE_URL_TEST!
@@ -31,7 +32,9 @@ describe('backfill: ancillary writers stamp host', () => {
   beforeAll(async () => {
     await sql`TRUNCATE prompts_history, todos, file_snapshots, shell_snapshots RESTART IDENTITY CASCADE`
   })
-  afterAll(async () => { await sql.end() })
+  afterAll(async () => {
+    await sql.end()
+  })
 
   it('ingestHistory stamps host on every prompts_history row', async () => {
     const n = await ingestHistory(db, HISTORY_FILE, { host: 'h-test' })

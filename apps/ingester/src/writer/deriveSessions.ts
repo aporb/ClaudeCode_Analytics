@@ -1,6 +1,6 @@
-import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
-import { sql } from 'drizzle-orm'
 import type * as schema from '@cca/db/schema'
+import { sql } from 'drizzle-orm'
+import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 
 type Db = PostgresJsDatabase<typeof schema>
 
@@ -55,7 +55,10 @@ export async function rollupSessions(db: Db, sessionIds: string[]): Promise<void
       MIN(e.host) AS host
     FROM events e
     LEFT JOIN messages m ON m.uuid = e.uuid
-    WHERE e.session_id = ANY(ARRAY[${sql.join(sessionIds.map(id => sql`${id}`), sql`, `)}])
+    WHERE e.session_id = ANY(ARRAY[${sql.join(
+      sessionIds.map((id) => sql`${id}`),
+      sql`, `,
+    )}])
     GROUP BY e.session_id
     ON CONFLICT (session_id) DO UPDATE SET
       project_path       = EXCLUDED.project_path,

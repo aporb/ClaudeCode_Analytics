@@ -1,14 +1,19 @@
+import { sql } from 'drizzle-orm'
 import { describe, expect, it } from 'vitest'
 import { getDb } from '../db'
-import { sql } from 'drizzle-orm'
-import { getSessionStats, getSessionTopTools, getSessionFilesTouched, getSessionFirstPrompts } from './session'
+import {
+  getSessionFilesTouched,
+  getSessionFirstPrompts,
+  getSessionStats,
+  getSessionTopTools,
+} from './session'
 
 async function pickSessionId(): Promise<string | null> {
   const db = getDb()
   const rows = await db.execute<{ session_id: string }>(sql`
     SELECT session_id FROM tool_calls GROUP BY session_id LIMIT 1
   `)
-  return ((rows as unknown as Array<{ session_id: string }>)[0])?.session_id ?? null
+  return (rows as unknown as Array<{ session_id: string }>)[0]?.session_id ?? null
 }
 
 describe('session queries', () => {

@@ -7,5 +7,8 @@ export function parseHosts(input: {
     : input.searchParams.host
   const raw = (param ?? input.cookieValue ?? '').trim()
   if (!raw) return null
-  return raw.split(',').map((s) => s.trim()).filter(Boolean)
+  return raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
 }

@@ -1,7 +1,7 @@
 'use client'
 
-import { useRouter, usePathname, useSearchParams } from 'next/navigation'
-import { useState, useRef, useEffect } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
 
 const PRESETS = [
   { value: 'today', label: 'Today' },
@@ -88,12 +88,23 @@ export function TimePicker({ value }: { value: string | undefined }) {
           </button>
           {customOpen && (
             <div className="px-3 py-2 space-y-2 border-t border-border">
-              <input type="date" value={customStart} onChange={(e) => setCustomStart(e.target.value)}
-                className="w-full text-xs px-2 py-1 rounded border border-border bg-background" />
-              <input type="date" value={customEnd} onChange={(e) => setCustomEnd(e.target.value)}
-                className="w-full text-xs px-2 py-1 rounded border border-border bg-background" />
-              <button type="button" onClick={applyCustom}
-                className="w-full text-xs px-2 py-1 rounded bg-primary text-primary-foreground">
+              <input
+                type="date"
+                value={customStart}
+                onChange={(e) => setCustomStart(e.target.value)}
+                className="w-full text-xs px-2 py-1 rounded border border-border bg-background"
+              />
+              <input
+                type="date"
+                value={customEnd}
+                onChange={(e) => setCustomEnd(e.target.value)}
+                className="w-full text-xs px-2 py-1 rounded border border-border bg-background"
+              />
+              <button
+                type="button"
+                onClick={applyCustom}
+                className="w-full text-xs px-2 py-1 rounded bg-primary text-primary-foreground"
+              >
                 Apply
               </button>
             </div>

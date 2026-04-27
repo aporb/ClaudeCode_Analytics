@@ -1,11 +1,14 @@
 import 'server-only'
-import { getDb } from '../db'
 import { sessions } from '@cca/db/schema'
 import { and, desc, gte, ilike, lte, sql } from 'drizzle-orm'
+import { getDb } from '../db'
 
 /** Build a Postgres ARRAY[…]::text[] SQL chunk from a JS string array. */
 export function pgTextArray(values: string[]) {
-  return sql`ARRAY[${sql.join(values.map((v) => sql`${v}`), sql`, `)}]::text[]`
+  return sql`ARRAY[${sql.join(
+    values.map((v) => sql`${v}`),
+    sql`, `,
+  )}]::text[]`
 }
 
 export interface SessionsQuery {
@@ -33,7 +36,10 @@ export async function listSessions(q: SessionsQuery) {
   if (q.hosts && q.hosts.length > 0) {
     conditions.push(sql`${sessions.host} = ANY(${pgTextArray(q.hosts)})`)
   }
-  const order = q.sortBy === 'cost' ? sql`${sessions.estimatedCostUsd} DESC NULLS LAST` : desc(sessions.startedAt)
+  const order =
+    q.sortBy === 'cost'
+      ? sql`${sessions.estimatedCostUsd} DESC NULLS LAST`
+      : desc(sessions.startedAt)
   return db
     .select({
       sessionId: sessions.sessionId,
@@ -55,7 +61,9 @@ export async function listSessions(q: SessionsQuery) {
     .offset(q.offset ?? 0)
 }
 
-export async function countSessions(q: Pick<SessionsQuery, 'project' | 'since' | 'models' | 'hosts'>): Promise<number> {
+export async function countSessions(
+  q: Pick<SessionsQuery, 'project' | 'since' | 'models' | 'hosts'>,
+): Promise<number> {
   const db = getDb()
   const conditions = []
   if (q.project) conditions.push(ilike(sessions.projectPath, `%${q.project}%`))

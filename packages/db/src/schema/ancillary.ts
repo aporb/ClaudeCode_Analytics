@@ -1,4 +1,12 @@
-import { bigserial, integer, jsonb, pgTable, primaryKey, text, timestamp } from 'drizzle-orm/pg-core'
+import {
+  bigserial,
+  integer,
+  jsonb,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+} from 'drizzle-orm/pg-core'
 
 export const promptsHistory = pgTable('prompts_history', {
   id: bigserial('id', { mode: 'number' }).primaryKey(),

@@ -7,10 +7,12 @@ export function ActiveHoursHeatmap({ data }: { data: { cells: number[]; clamped:
       <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
         Active hours {data.clamped && <span className="opacity-70">(clamped to 30d)</span>}
       </div>
-      <div className="grid" style={{ gridTemplateColumns: `auto repeat(24, 1fr)`, gap: 2 }}>
-        <div></div>
+      <div className="grid" style={{ gridTemplateColumns: 'auto repeat(24, 1fr)', gap: 2 }}>
+        <div />
         {Array.from({ length: 24 }, (_, h) => (
-          <div key={h} className="text-[8px] text-center text-muted-foreground">{h % 6 === 0 ? h : ''}</div>
+          <div key={h} className="text-[8px] text-center text-muted-foreground">
+            {h % 6 === 0 ? h : ''}
+          </div>
         ))}
         {DOWS.map((dow, dowIdx) => (
           <div key={dow} className="contents">
@@ -19,12 +21,15 @@ export function ActiveHoursHeatmap({ data }: { data: { cells: number[]; clamped:
               const v = data.cells[dowIdx * 24 + h] ?? 0
               const intensity = v / max
               return (
-                <div key={h} title={`${dow} ${h}:00 — ${v} sessions`}
+                <div
+                  key={h}
+                  title={`${dow} ${h}:00 — ${v} sessions`}
                   className="rounded-sm"
                   style={{
                     background: `hsl(var(--model-sonnet) / ${0.08 + intensity * 0.85})`,
                     aspectRatio: '1',
-                  }} />
+                  }}
+                />
               )
             })}
           </div>

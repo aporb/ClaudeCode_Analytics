@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import postgres from 'postgres'
-import { config } from 'dotenv'
 import { resolve } from 'node:path'
+import { config } from 'dotenv'
+import postgres from 'postgres'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 config({ path: resolve(__dirname, '../../../.env.local') })
 
 const TEST_URL = process.env.CCA_DATABASE_URL_TEST
@@ -9,8 +9,12 @@ if (!TEST_URL) throw new Error('CCA_DATABASE_URL_TEST required')
 
 describe('schema: events', () => {
   let sql: postgres.Sql
-  beforeAll(() => { sql = postgres(TEST_URL!, { max: 2 }) })
-  afterAll(async () => { await sql.end() })
+  beforeAll(() => {
+    sql = postgres(TEST_URL!, { max: 2 })
+  })
+  afterAll(async () => {
+    await sql.end()
+  })
 
   it('has events table with expected columns', async () => {
     const cols = await sql<Array<{ column_name: string; data_type: string }>>`
@@ -22,10 +26,23 @@ describe('schema: events', () => {
     const names = cols.map((c) => c.column_name)
     expect(names).toEqual(
       expect.arrayContaining([
-        'uuid', 'session_id', 'parent_uuid', 'type', 'subtype',
-        'timestamp', 'cwd', 'project_path', 'git_branch', 'cc_version',
-        'entrypoint', 'is_sidechain', 'agent_id', 'request_id',
-        'payload', 'source_file', 'ingested_at',
+        'uuid',
+        'session_id',
+        'parent_uuid',
+        'type',
+        'subtype',
+        'timestamp',
+        'cwd',
+        'project_path',
+        'git_branch',
+        'cc_version',
+        'entrypoint',
+        'is_sidechain',
+        'agent_id',
+        'request_id',
+        'payload',
+        'source_file',
+        'ingested_at',
       ]),
     )
   })
@@ -36,11 +53,24 @@ describe('schema: events', () => {
       WHERE table_name = 'sessions' ORDER BY ordinal_position`
     expect(cols.map((c) => c.column_name)).toEqual(
       expect.arrayContaining([
-        'session_id', 'project_path', 'started_at', 'ended_at', 'duration_sec',
-        'message_count', 'tool_call_count', 'subagent_count', 'git_branch',
-        'cc_version', 'models_used', 'total_input_tokens', 'total_output_tokens',
-        'total_cache_creation', 'total_cache_read', 'estimated_cost_usd',
-        'first_user_prompt', 'status',
+        'session_id',
+        'project_path',
+        'started_at',
+        'ended_at',
+        'duration_sec',
+        'message_count',
+        'tool_call_count',
+        'subagent_count',
+        'git_branch',
+        'cc_version',
+        'models_used',
+        'total_input_tokens',
+        'total_output_tokens',
+        'total_cache_creation',
+        'total_cache_read',
+        'estimated_cost_usd',
+        'first_user_prompt',
+        'status',
       ]),
     )
   })
@@ -60,8 +90,16 @@ describe('schema: events', () => {
       WHERE table_name = 'tool_calls' ORDER BY ordinal_position`
     expect(cols.map((c) => c.column_name)).toEqual(
       expect.arrayContaining([
-        'uuid', 'session_id', 'timestamp', 'tool_name', 'input', 'result',
-        'result_uuid', 'duration_ms', 'is_error', 'parent_message_uuid',
+        'uuid',
+        'session_id',
+        'timestamp',
+        'tool_name',
+        'input',
+        'result',
+        'result_uuid',
+        'duration_ms',
+        'is_error',
+        'parent_message_uuid',
       ]),
     )
   })
@@ -73,8 +111,12 @@ describe('schema: events', () => {
     const names = tables.map((t) => t.table_name)
     expect(names).toEqual(
       expect.arrayContaining([
-        'prompts_history', 'todos', 'file_snapshots', 'shell_snapshots',
-        'model_pricing', '_ingest_cursors',
+        'prompts_history',
+        'todos',
+        'file_snapshots',
+        'shell_snapshots',
+        'model_pricing',
+        '_ingest_cursors',
       ]),
     )
   })

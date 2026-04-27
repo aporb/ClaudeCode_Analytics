@@ -1,7 +1,7 @@
 'use client'
 
-import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 
@@ -36,7 +36,12 @@ export function SearchForm() {
     <form onSubmit={onSubmit} className="flex flex-wrap gap-3 mb-6 items-end">
       <label className="flex flex-col gap-1 flex-1 min-w-64">
         <span className="text-xs text-muted-foreground">query</span>
-        <Input name="q" defaultValue={params.get('q') ?? ''} placeholder="full-text search" autoFocus />
+        <Input
+          name="q"
+          defaultValue={params.get('q') ?? ''}
+          placeholder="full-text search"
+          autoFocus
+        />
       </label>
       <label className="flex flex-col gap-1">
         <span className="text-xs text-muted-foreground">project</span>
@@ -51,7 +56,9 @@ export function SearchForm() {
               <button
                 key={m.value}
                 type="button"
-                onClick={() => setModels(on ? models.filter((x) => x !== m.value) : [...models, m.value])}
+                onClick={() =>
+                  setModels(on ? models.filter((x) => x !== m.value) : [...models, m.value])
+                }
                 className={`px-2 py-1 rounded text-xs border ${on ? 'border-foreground bg-muted' : 'border-border opacity-70'}`}
               >
                 {m.label}

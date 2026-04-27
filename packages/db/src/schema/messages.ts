@@ -1,9 +1,20 @@
 import { sql } from 'drizzle-orm'
-import { boolean, customType, index, integer, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
+import {
+  boolean,
+  customType,
+  index,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from 'drizzle-orm/pg-core'
 import { events } from './events.ts'
 
 const tsvector = customType<{ data: string }>({
-  dataType() { return 'tsvector' },
+  dataType() {
+    return 'tsvector'
+  },
 })
 
 export const messages = pgTable(

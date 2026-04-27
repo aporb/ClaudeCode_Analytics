@@ -1,12 +1,11 @@
-import { describe, it, expect } from 'vitest'
-import { flatToRealPath, realToFlatPath, projectPathFromFile } from '../src/paths.js'
+import { describe, expect, it } from 'vitest'
+import { flatToRealPath, projectPathFromFile, realToFlatPath } from '../src/paths.js'
 
 describe('paths', () => {
   // flat → real: component boundaries with '_' round-trip; internal '_' and '-' are lossy.
   it('converts unambiguous flat CC path back to real filesystem path', () => {
     // '-Users-someuser-projects-myapp' has NO '--' and no ambiguity.
-    expect(flatToRealPath('-Users-someuser-projects-myapp'))
-      .toBe('/Users/someuser/projects/myapp')
+    expect(flatToRealPath('-Users-someuser-projects-myapp')).toBe('/Users/someuser/projects/myapp')
   })
 
   it('handles "--" in flat path decoding to "_" (mid-component, not boundary)', () => {
@@ -20,8 +19,7 @@ describe('paths', () => {
   it('documents lossy case: "-" inside a dirname reads as "/"', () => {
     // Original '/Users/a/ClaudeCode-Analytics' encodes to '-Users-a-ClaudeCode-Analytics'
     // — inversion can't distinguish the intended '-' from a '/', so we read as '/'.
-    expect(flatToRealPath('-Users-a-ClaudeCode-Analytics'))
-      .toBe('/Users/a/ClaudeCode/Analytics')
+    expect(flatToRealPath('-Users-a-ClaudeCode-Analytics')).toBe('/Users/a/ClaudeCode/Analytics')
   })
 
   it('round-trips a real path with no "-" and component-boundary "_" only', () => {
@@ -49,7 +47,8 @@ describe('paths', () => {
   })
 
   it('extracts project path for subagent file', () => {
-    const f = '/Users/someuser/.claude/projects/-Users-someuser-projects-foo/session123/subagents/agent-abc.jsonl'
+    const f =
+      '/Users/someuser/.claude/projects/-Users-someuser-projects-foo/session123/subagents/agent-abc.jsonl'
     expect(projectPathFromFile(f)).toBe('/Users/someuser/projects/foo')
   })
 

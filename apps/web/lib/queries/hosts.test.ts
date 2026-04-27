@@ -1,5 +1,5 @@
-import { describe, expect, it, beforeAll, afterAll } from 'vitest'
 import postgres from 'postgres'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { getFailingHosts, getHostStats } from './hosts'
 
 const URL = process.env.CCA_DATABASE_URL
@@ -68,25 +68,25 @@ describe('getHostStats', () => {
     expect(b).toBeDefined()
 
     // Host A: 2 sessions, summed tokens, sum cost, top model = sonnet (in both)
-    expect(a!.sessionCount).toBe(2)
-    expect(a!.totalInputTokens).toBe(3000)
-    expect(a!.totalOutputTokens).toBe(1200)
-    expect(a!.totalCacheCreation).toBe(400)
-    expect(a!.totalCacheRead).toBe(600)
-    expect(a!.estimatedCostUsd).toBeCloseTo(4.75, 2)
-    expect(a!.topModel).toBe('claude-sonnet-4-6')
-    expect(a!.consecutiveErrors).toBe(0)
-    expect(a!.lastError).toBeNull()
-    expect(a!.lastPulledAt).not.toBeNull()
-    expect(a!.lastActiveAt).not.toBeNull()
+    expect(a?.sessionCount).toBe(2)
+    expect(a?.totalInputTokens).toBe(3000)
+    expect(a?.totalOutputTokens).toBe(1200)
+    expect(a?.totalCacheCreation).toBe(400)
+    expect(a?.totalCacheRead).toBe(600)
+    expect(a?.estimatedCostUsd).toBeCloseTo(4.75, 2)
+    expect(a?.topModel).toBe('claude-sonnet-4-6')
+    expect(a?.consecutiveErrors).toBe(0)
+    expect(a?.lastError).toBeNull()
+    expect(a?.lastPulledAt).not.toBeNull()
+    expect(a?.lastActiveAt).not.toBeNull()
 
     // Host B: 1 session, top model = opus
-    expect(b!.sessionCount).toBe(1)
-    expect(b!.totalInputTokens).toBe(500)
-    expect(b!.estimatedCostUsd).toBeCloseTo(0.90, 2)
-    expect(b!.topModel).toBe('claude-opus-4-7')
-    expect(b!.consecutiveErrors).toBe(3)
-    expect(b!.lastError).toBe('connection refused')
+    expect(b?.sessionCount).toBe(1)
+    expect(b?.totalInputTokens).toBe(500)
+    expect(b?.estimatedCostUsd).toBeCloseTo(0.9, 2)
+    expect(b?.topModel).toBe('claude-opus-4-7')
+    expect(b?.consecutiveErrors).toBe(3)
+    expect(b?.lastError).toBe('connection refused')
   })
 })
 

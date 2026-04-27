@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
+  type HostRow,
   formatLastPulled,
   formatNextIn,
   healthDot,
   renderHostsTable,
   sortHosts,
-  type HostRow,
 } from '../src/lib/hostsTable.js'
 
 const ANSI_RE = /\x1b\[[0-9;]*m/g
@@ -13,11 +13,7 @@ const strip = (s: string) => s.replace(ANSI_RE, '')
 
 describe('sortHosts', () => {
   it('puts local first, then alphabetical', () => {
-    const sorted = sortHosts([
-      { host: 'picoclaw' },
-      { host: 'hostinger' },
-      { host: 'local' },
-    ])
+    const sorted = sortHosts([{ host: 'picoclaw' }, { host: 'hostinger' }, { host: 'local' }])
     expect(sorted.map((r) => r.host)).toEqual(['local', 'hostinger', 'picoclaw'])
   })
 })

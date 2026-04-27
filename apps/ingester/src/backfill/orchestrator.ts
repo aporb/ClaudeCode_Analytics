@@ -1,21 +1,25 @@
-import { SingleBar, Presets } from 'cli-progress'
 import { statSync } from 'node:fs'
+import { Presets, SingleBar } from 'cli-progress'
 import pLimit from 'p-limit'
 import pc from 'picocolors'
 
-import { getDb, ingestCursors } from '@cca/db'
-import { sql } from 'drizzle-orm'
-import { readTranscript } from '@cca/parsers'
 import type { ParsedEvent } from '@cca/core'
+import { getDb, ingestCursors } from '@cca/db'
+import { readTranscript } from '@cca/parsers'
+import { sql } from 'drizzle-orm'
 
-import { enumerateSources } from './enumerate.js'
-import {
-  ingestHistory, ingestTodos, ingestFileHistory, ingestShellSnapshots, refreshMaterializedViews,
-} from './ancillary.js'
-import { insertEventsBatch } from '../writer/events.js'
 import { deriveMessagesFromEvents } from '../writer/deriveMessages.js'
-import { deriveToolCallsFromEvents } from '../writer/deriveToolCalls.js'
 import { rollupSessions } from '../writer/deriveSessions.js'
+import { deriveToolCallsFromEvents } from '../writer/deriveToolCalls.js'
+import { insertEventsBatch } from '../writer/events.js'
+import {
+  ingestFileHistory,
+  ingestHistory,
+  ingestShellSnapshots,
+  ingestTodos,
+  refreshMaterializedViews,
+} from './ancillary.js'
+import { enumerateSources } from './enumerate.js'
 
 const BATCH_SIZE = 1000
 
@@ -62,9 +66,12 @@ export async function backfillAll(
   const sources = enumerateSources(claudeHome)
   console.log(pc.dim(`found ${sources.transcripts.length} transcript files`))
 
-  const bar = new SingleBar({
-    format: `${pc.cyan('{bar}')} {percentage}% | {value}/{total} files | events: {events} | sessions: {sessions}`,
-  }, Presets.shades_classic)
+  const bar = new SingleBar(
+    {
+      format: `${pc.cyan('{bar}')} {percentage}% | {value}/{total} files | events: {events} | sessions: {sessions}`,
+    },
+    Presets.shades_classic,
+  )
   bar.start(sources.transcripts.length, 0, { events: 0, sessions: 0 })
 
   const limit = pLimit(opts.concurrency ?? 6)
@@ -73,18 +80,20 @@ export async function backfillAll(
   let done = 0
 
   await Promise.all(
-    sources.transcripts.map((f) => limit(async () => {
-      try {
-        const { events, sessions } = await ingestTranscriptFile(db, f, { host })
-        totalEvents += events
-        for (const s of sessions) allSessions.add(s)
-      } catch (e) {
-        console.error(pc.red(`\nfailed ${f}: ${(e as Error).message}`))
-      } finally {
-        done += 1
-        bar.update(done, { events: totalEvents, sessions: allSessions.size })
-      }
-    })),
+    sources.transcripts.map((f) =>
+      limit(async () => {
+        try {
+          const { events, sessions } = await ingestTranscriptFile(db, f, { host })
+          totalEvents += events
+          for (const s of sessions) allSessions.add(s)
+        } catch (e) {
+          console.error(pc.red(`\nfailed ${f}: ${(e as Error).message}`))
+        } finally {
+          done += 1
+          bar.update(done, { events: totalEvents, sessions: allSessions.size })
+        }
+      }),
+    ),
   )
   bar.stop()
 
@@ -100,14 +109,20 @@ export async function backfillAll(
   console.log(pc.dim(`  history: ${h}, todos: ${t}, file snapshots: ${fh}, shell: ${ss}`))
 
   console.log(pc.dim('refreshing materialized views...'))
-  try { await refreshMaterializedViews(db) } catch {
+  try {
+    await refreshMaterializedViews(db)
+  } catch {
     // CONCURRENTLY requires the view to be populated once; do a non-concurrent refresh first
-    try { await db.execute(sql`REFRESH MATERIALIZED VIEW usage_daily`) } catch {
+    try {
+      await db.execute(sql`REFRESH MATERIALIZED VIEW usage_daily`)
+    } catch {
       // View may not exist in test/minimal environments — skip silently
     }
   }
 
-  console.log(pc.green(`\n✓ backfill complete: ${totalEvents} events across ${allSessions.size} sessions`))
+  console.log(
+    pc.green(`\n✓ backfill complete: ${totalEvents} events across ${allSessions.size} sessions`),
+  )
 }
 
 function chunk<T>(arr: T[], size: number): T[][] {

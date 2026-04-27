@@ -1,18 +1,18 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
 import { config } from 'dotenv'
 config({ path: resolve(__dirname, '../../../.env.local') })
 
-import postgres from 'postgres'
-import { drizzle } from 'drizzle-orm/postgres-js'
-import { inArray } from 'drizzle-orm'
-import { events } from '@cca/db'
-import { insertEventsBatch } from '../src/writer/events.js'
 import type { ParsedEvent } from '@cca/core'
+import { events } from '@cca/db'
+import { inArray } from 'drizzle-orm'
+import { drizzle } from 'drizzle-orm/postgres-js'
+import postgres from 'postgres'
+import { insertEventsBatch } from '../src/writer/events.js'
 
 const TEST_URL = process.env.CCA_DATABASE_URL_TEST!
 const sql = postgres(TEST_URL, { max: 2 })
@@ -41,7 +41,9 @@ describe('writer: events', () => {
   beforeAll(async () => {
     await sql`TRUNCATE events RESTART IDENTITY CASCADE`
   })
-  afterAll(async () => { await sql.end() })
+  afterAll(async () => {
+    await sql.end()
+  })
 
   it('inserts one event', async () => {
     const n = await insertEventsBatch(db, [sample], { host: 'local' })
@@ -52,7 +54,7 @@ describe('writer: events', () => {
 
   it('is idempotent on uuid conflict', async () => {
     const n = await insertEventsBatch(db, [sample, sample], { host: 'local' })
-    expect(n).toBe(0)  // both conflict
+    expect(n).toBe(0) // both conflict
   })
 
   it('inserts 1000 in one batch', async () => {
@@ -72,7 +74,10 @@ describe('writer: events', () => {
       { ...sample, uuid: u2, payload: { uuid: u2 } },
     ]
     await insertEventsBatch(db, batch, { host: 'hostinger' })
-    const rows = await db.select().from(events).where(inArray(events.uuid, [u1, u2]))
+    const rows = await db
+      .select()
+      .from(events)
+      .where(inArray(events.uuid, [u1, u2]))
     expect(rows).toHaveLength(2)
     expect(rows.every((r) => r.host === 'hostinger')).toBe(true)
   })

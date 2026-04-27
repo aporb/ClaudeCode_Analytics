@@ -1,14 +1,14 @@
-import { config } from 'dotenv'
 import path, { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { config } from 'dotenv'
 config({ path: resolve(process.cwd(), '../../.env.local') })
 
+import { closeDb, getDb } from '@cca/db'
 import { Command } from 'commander'
 import { sql } from 'drizzle-orm'
-import { closeDb, getDb } from '@cca/db'
-import { rollupSessions } from './writer/deriveSessions.js'
 import { backfillAll } from './backfill/orchestrator.js'
 import { startDaemon } from './daemon/index.js'
+import { rollupSessions } from './writer/deriveSessions.js'
 
 const program = new Command()
 program.name('cca-ingester').description('CCA ingester commands')
@@ -28,7 +28,9 @@ program
   .description('Recompute derived tables (sessions) for all sessions in events')
   .action(async () => {
     const db = getDb()
-    const rows = await db.execute<{ session_id: string }>(sql`SELECT DISTINCT session_id FROM events`)
+    const rows = await db.execute<{ session_id: string }>(
+      sql`SELECT DISTINCT session_id FROM events`,
+    )
     const sessionIds = rows.map((r) => r.session_id)
     const batchSize = 500
     for (let i = 0; i < sessionIds.length; i += batchSize) {
@@ -73,4 +75,7 @@ program
     await closeDb()
   })
 
-program.parseAsync().catch((e) => { console.error(e); process.exit(1) })
+program.parseAsync().catch((e) => {
+  console.error(e)
+  process.exit(1)
+})

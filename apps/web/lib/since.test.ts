@@ -15,8 +15,8 @@ describe('parseSince', () => {
   it('parses the today token at start of local day', () => {
     const got = parseSince('today', NOW)
     expect(got).not.toBeNull()
-    expect(got!.getHours()).toBe(0)
-    expect(got!.getMinutes()).toBe(0)
+    expect(got?.getHours()).toBe(0)
+    expect(got?.getMinutes()).toBe(0)
   })
 
   it('today is local midnight regardless of host timezone', () => {
@@ -24,8 +24,8 @@ describe('parseSince', () => {
     // test passes anywhere, and confirm 'today' is never in the future.
     const got = parseSince('today', NOW)
     expect(got).not.toBeNull()
-    expect(got!.getTime()).toBe(dayjs(NOW).startOf('day').valueOf())
-    expect(got!.getTime()).toBeLessThanOrEqual(NOW.getTime())
+    expect(got?.getTime()).toBe(dayjs(NOW).startOf('day').valueOf())
+    expect(got?.getTime()).toBeLessThanOrEqual(NOW.getTime())
   })
 
   it('parses the all token as null sentinel', () => {

@@ -1,12 +1,12 @@
 import path from 'node:path'
-import pc from 'picocolors'
-import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 import type * as schema from '@cca/db/schema'
+import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
+import pc from 'picocolors'
 import { backfillAll } from '../backfill/orchestrator.js'
-import { advanceBackoff, isDue, type BackoffInputState } from './backoff.js'
+import { type BackoffInputState, advanceBackoff, isDue } from './backoff.js'
 import type { RemoteEntry } from './config.js'
 import { withHostLock } from './lock.js'
-import { runRsync, type RsyncVersion } from './rsync.js'
+import { type RsyncVersion, runRsync } from './rsync.js'
 import { loadState, upsertState } from './state.js'
 
 type Db = PostgresJsDatabase<typeof schema>
@@ -37,7 +37,11 @@ export async function runHost(opts: RunHostOptions): Promise<RunHostResult> {
     const now = new Date()
 
     if (!force && !isDue(prev, now)) {
-      console.log(pc.dim(`[sync] ${remote.host}: not due (last pulled ${prev.lastPulledAt?.toISOString() ?? 'never'}, interval ${prev.currentIntervalHours}h)`))
+      console.log(
+        pc.dim(
+          `[sync] ${remote.host}: not due (last pulled ${prev.lastPulledAt?.toISOString() ?? 'never'}, interval ${prev.currentIntervalHours}h)`,
+        ),
+      )
       return { kind: 'skipped-not-due', host: remote.host }
     }
 
@@ -47,19 +51,29 @@ export async function runHost(opts: RunHostOptions): Promise<RunHostResult> {
     if (outcome.kind === 'error') {
       const next = advanceBackoff(prev, { kind: 'error', message: outcome.stderr }, now)
       await upsertState(db, remote.host, next)
-      console.error(pc.red(`[sync] ${remote.host}: rsync failed (exit ${outcome.exitCode}): ${outcome.stderr.trim().slice(0, 200)}`))
+      console.error(
+        pc.red(
+          `[sync] ${remote.host}: rsync failed (exit ${outcome.exitCode}): ${outcome.stderr.trim().slice(0, 200)}`,
+        ),
+      )
       return { kind: 'error', host: remote.host, state: next, message: outcome.stderr }
     }
 
     if (outcome.kind === 'success-empty') {
       const next = advanceBackoff(prev, 'empty', now)
       await upsertState(db, remote.host, next)
-      console.log(pc.dim(`[sync] ${remote.host}: no new data (next interval ${next.currentIntervalHours}h)`))
+      console.log(
+        pc.dim(`[sync] ${remote.host}: no new data (next interval ${next.currentIntervalHours}h)`),
+      )
       return { kind: 'skipped-empty', host: remote.host, state: next }
     }
 
     // Non-empty success: ingest
-    console.log(pc.dim(`[sync] ${remote.host}: ${outcome.stats.filesTransferred ?? '?'} files transferred → ingest`))
+    console.log(
+      pc.dim(
+        `[sync] ${remote.host}: ${outcome.stats.filesTransferred ?? '?'} files transferred → ingest`,
+      ),
+    )
     await backfillAll(claudeMirror, { host: remote.host })
 
     const next = advanceBackoff(prev, 'non-empty', now)

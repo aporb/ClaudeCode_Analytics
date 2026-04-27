@@ -23,7 +23,7 @@ export interface ParsedEvent {
   isSidechain: boolean
   agentId: string | null
   requestId: string | null
-  payload: unknown            // raw JSON line
+  payload: unknown // raw JSON line
   sourceFile: string
 }
 
@@ -44,7 +44,7 @@ export interface DerivedMessage {
 
 // Derived tool call (tool_use + tool_result joined)
 export interface DerivedToolCall {
-  uuid: string                // = tool_use event uuid
+  uuid: string // = tool_use event uuid
   sessionId: string
   timestamp: Date
   toolName: string

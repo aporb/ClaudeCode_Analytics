@@ -52,8 +52,7 @@ export function resolveSince(expr: string | undefined, now: Date = new Date()): 
     // Prefer the named label; otherwise derive 'Last <expr>' for arbitrary
     // relative units (e.g. '14d', '2w'). Only the genuinely-invalid path
     // below falls back to the default label.
-    const label =
-      RELATIVE_LABELS[e] ?? (REL.test(e) ? `Last ${e}` : `Last ${DEFAULT_EXPR}`)
+    const label = RELATIVE_LABELS[e] ?? (REL.test(e) ? `Last ${e}` : `Last ${DEFAULT_EXPR}`)
     return { start: parsed, end: now, label }
   }
   const start = parseSince(DEFAULT_EXPR, now)!

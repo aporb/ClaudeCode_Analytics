@@ -90,8 +90,8 @@ export function renderHostsTable(rows: HostRow[], now: Date = new Date()): strin
 
     const cells = [host, events, lastPulled, nextRendered, health]
     cells.forEach((c, i) => {
-      cols[i]!.values.push(c)
-      cols[i]!.widths.push(visibleWidth(c))
+      cols[i]?.values.push(c)
+      cols[i]?.widths.push(visibleWidth(c))
     })
   }
 
@@ -99,12 +99,11 @@ export function renderHostsTable(rows: HostRow[], now: Date = new Date()): strin
   const colWidth = cols.map((c) => Math.max(c.header.length, ...(c.widths.length ? c.widths : [0])))
 
   const SEP = '    '
-  const headerLine =
-    '  ' + cols.map((c, i) => padRight(c.header, colWidth[i]!)).join(SEP)
+  const headerLine = `  ${cols.map((c, i) => padRight(c.header, colWidth[i]!)).join(SEP)}`
   const lines = [headerLine]
   for (let i = 0; i < sorted.length; i++) {
     const row = cols.map((c, j) => padRight(c.values[i]!, colWidth[j]!)).join(SEP)
-    lines.push('  ' + row)
+    lines.push(`  ${row}`)
   }
   return lines
 }

@@ -1,7 +1,7 @@
-import { eq } from 'drizzle-orm'
 import { hostSyncState } from '@cca/db'
-import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 import type * as schema from '@cca/db/schema'
+import { eq } from 'drizzle-orm'
+import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 import type { BackoffInputState } from './backoff.js'
 
 type Db = PostgresJsDatabase<typeof schema>
@@ -53,9 +53,7 @@ export async function resetState(db: Db, host: string): Promise<void> {
   await db.delete(hostSyncState).where(eq(hostSyncState.host, host))
 }
 
-export async function listAllStates(
-  db: Db,
-): Promise<Array<{ host: string } & BackoffInputState>> {
+export async function listAllStates(db: Db): Promise<Array<{ host: string } & BackoffInputState>> {
   const rows = await db.select().from(hostSyncState)
   return rows.map((r) => ({
     host: r.host,

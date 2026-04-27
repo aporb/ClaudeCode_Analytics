@@ -1,6 +1,6 @@
-import { config } from 'dotenv'
-import { resolve, dirname } from 'node:path'
+import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { config } from 'dotenv'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -18,7 +18,13 @@ async function main() {
   const db = drizzle(sql)
   await migrate(db, { migrationsFolder: './drizzle' })
   // Also apply the raw-SQL migrations that drizzle-kit can't express
-  for (const f of ['0001_events_gin.sql', '0003_messages_indexes.sql', '0010_usage_daily_view.sql', '0005_prompts_history_dedup_fix.sql', '0011_multi_host.sql']) {
+  for (const f of [
+    '0001_events_gin.sql',
+    '0003_messages_indexes.sql',
+    '0010_usage_daily_view.sql',
+    '0005_prompts_history_dedup_fix.sql',
+    '0011_multi_host.sql',
+  ]) {
     const path = resolve(__dirname, '..', 'drizzle', f)
     try {
       const fs = await import('node:fs/promises')
@@ -32,4 +38,7 @@ async function main() {
   console.log('migrations applied')
 }
 
-main().catch((e) => { console.error(e); process.exit(1) })
+main().catch((e) => {
+  console.error(e)
+  process.exit(1)
+})

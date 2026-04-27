@@ -1,6 +1,6 @@
-import { describe, expect, it, beforeAll, afterAll } from 'vitest'
 import postgres from 'postgres'
-import { listSessions, countSessions } from './sessions'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { countSessions, listSessions } from './sessions'
 
 // Test data is isolated by a unique time window + dedicated test host names
 // so it doesn't collide with real ingested data. Mirrors the pattern used by

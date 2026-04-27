@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
+import { useEffect, useState } from 'react'
 
 export function LiveIndicator() {
   const [connected, setConnected] = useState(false)
@@ -30,7 +30,10 @@ export function LiveIndicator() {
   return (
     <div className="flex items-center gap-2 text-xs text-muted-foreground">
       <span
-        className={cn('block size-2 rounded-full', connected ? 'bg-emerald-500' : 'bg-muted-foreground/40')}
+        className={cn(
+          'block size-2 rounded-full',
+          connected ? 'bg-emerald-500' : 'bg-muted-foreground/40',
+        )}
         title={connected ? 'daemon connected' : 'daemon unreachable'}
       />
       {lastEventAt && <span>last event: {lastEventAt.toISOString().slice(11, 19)}</span>}

@@ -14,11 +14,17 @@ export function tailCommand(): Command {
       try {
         for await (const { event, data } of consumeSse(url, controller.signal)) {
           const when = new Date().toISOString().slice(11, 19)
-          const kind = event === 'status' ? pc.yellow(event) : event === 'event' ? pc.cyan(event) : pc.dim(event)
+          const kind =
+            event === 'status'
+              ? pc.yellow(event)
+              : event === 'event'
+                ? pc.cyan(event)
+                : pc.dim(event)
           console.log(`${pc.dim(when)} ${kind.padEnd(20)} ${data}`)
         }
       } catch (e) {
-        if ((e as Error).name !== 'AbortError') console.error(pc.red(`tail: ${(e as Error).message}`))
+        if ((e as Error).name !== 'AbortError')
+          console.error(pc.red(`tail: ${(e as Error).message}`))
       }
     })
 }

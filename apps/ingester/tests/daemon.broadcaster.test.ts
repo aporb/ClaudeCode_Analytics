@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { Broadcaster } from '../src/daemon/broadcaster.js'
 
 describe('Broadcaster', () => {
@@ -20,7 +20,9 @@ describe('Broadcaster', () => {
 
   it('isolates subscriber errors', () => {
     const b = new Broadcaster()
-    b.subscribe(() => { throw new Error('boom') })
+    b.subscribe(() => {
+      throw new Error('boom')
+    })
     const good: unknown[] = []
     b.subscribe((e) => good.push(e))
     expect(() => b.publish({ kind: 'event', payload: { n: 1 } })).not.toThrow()
