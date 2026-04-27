@@ -10,6 +10,8 @@ coverage/
 scripts/run-daemon.sh
 scripts/run-sync.sh
 .next/
+cca.remotes.json
+.cca/
 
 # Visual brainstorming companion artifacts
 .superpowers/
