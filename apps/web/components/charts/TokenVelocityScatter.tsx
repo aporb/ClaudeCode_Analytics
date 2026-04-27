@@ -39,7 +39,7 @@ export function TokenVelocityScatter({
               tick={{ fontSize: 10 }}
               tickFormatter={(v) => `${Math.round(v)}t/s`}
             />
-            <Tooltip formatter={(v: number) => `${v.toFixed(2)} t/s`} />
+            <Tooltip formatter={(v) => `${Number(v).toFixed(2)} t/s`} />
             <Scatter data={data} fill="hsl(var(--model-sonnet))" />
           </ScatterChart>
         </ResponsiveContainer>

@@ -42,7 +42,7 @@ export function StackedAreaSpend({ rows }: { rows: Row[] }) {
           <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
           <XAxis dataKey="day" tick={{ fontSize: 10 }} />
           <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `$${v}`} />
-          <Tooltip formatter={(v: number) => `$${v.toFixed(2)}`} />
+          <Tooltip formatter={(v) => `$${Number(v).toFixed(2)}`} />
           <Legend wrapperStyle={{ fontSize: 11 }} />
           {models.map((m) => (
             <Area

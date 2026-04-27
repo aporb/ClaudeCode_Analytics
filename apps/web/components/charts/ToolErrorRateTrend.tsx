@@ -23,7 +23,7 @@ export function ToolErrorRateTrend({ rows }: { rows: { day: string; errorRate: n
             <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
             <XAxis dataKey="day" tick={{ fontSize: 10 }} />
             <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `${v}%`} />
-            <Tooltip formatter={(v: number) => `${v}%`} />
+            <Tooltip formatter={(v) => `${Number(v)}%`} />
             <Line type="monotone" dataKey="pct" stroke="#ef4444" strokeWidth={2} dot={false} />
           </LineChart>
         </ResponsiveContainer>

@@ -25,7 +25,7 @@ export function LatencyPercentiles({
             <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
             <XAxis dataKey="day" tick={{ fontSize: 10 }} />
             <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `${v}s`} />
-            <Tooltip formatter={(v: number) => `${v.toFixed(2)}s`} />
+            <Tooltip formatter={(v) => `${Number(v).toFixed(2)}s`} />
             <Legend wrapperStyle={{ fontSize: 11 }} />
             <Line
               type="monotone"

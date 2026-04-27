@@ -23,7 +23,7 @@ export function CacheHitTrend({ rows }: { rows: { day: string; hitPct: number }[
             <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
             <XAxis dataKey="day" tick={{ fontSize: 10 }} />
             <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
-            <Tooltip formatter={(v: number) => `${v}%`} />
+            <Tooltip formatter={(v) => `${Number(v)}%`} />
             <Line
               type="monotone"
               dataKey="pct"
