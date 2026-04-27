@@ -19,15 +19,19 @@ import { rollupSessions } from '../writer/deriveSessions.js'
 
 const BATCH_SIZE = 1000
 
-async function ingestTranscriptFile(db: ReturnType<typeof getDb>, file: string): Promise<{ events: number; sessions: Set<string> }> {
+async function ingestTranscriptFile(
+  db: ReturnType<typeof getDb>,
+  file: string,
+  opts: { host: string },
+): Promise<{ events: number; sessions: Set<string> }> {
   const sessions = new Set<string>()
   let events = 0
   let buf: ParsedEvent[] = []
   const flush = async () => {
     if (buf.length === 0) return
-    const n = await insertEventsBatch(db, buf, { host: 'local' })
-    await deriveMessagesFromEvents(db, buf, { host: 'local' })
-    await deriveToolCallsFromEvents(db, buf, { host: 'local' })
+    const n = await insertEventsBatch(db, buf, { host: opts.host })
+    await deriveMessagesFromEvents(db, buf, { host: opts.host })
+    await deriveToolCallsFromEvents(db, buf, { host: opts.host })
     events += n
     buf = []
   }
@@ -49,7 +53,11 @@ async function ingestTranscriptFile(db: ReturnType<typeof getDb>, file: string):
   return { events, sessions }
 }
 
-export async function backfillAll(claudeHome: string, opts: { concurrency?: number } = {}): Promise<void> {
+export async function backfillAll(
+  claudeHome: string,
+  opts: { concurrency?: number; host?: string } = {},
+): Promise<void> {
+  const host = opts.host ?? 'local'
   const db = getDb()
   const sources = enumerateSources(claudeHome)
   console.log(pc.dim(`found ${sources.transcripts.length} transcript files`))
@@ -67,7 +75,7 @@ export async function backfillAll(claudeHome: string, opts: { concurrency?: numb
   await Promise.all(
     sources.transcripts.map((f) => limit(async () => {
       try {
-        const { events, sessions } = await ingestTranscriptFile(db, f)
+        const { events, sessions } = await ingestTranscriptFile(db, f, { host })
         totalEvents += events
         for (const s of sessions) allSessions.add(s)
       } catch (e) {
@@ -85,10 +93,10 @@ export async function backfillAll(claudeHome: string, opts: { concurrency?: numb
   for (const c of chunks) await rollupSessions(db, c)
 
   console.log(pc.dim('ingesting ancillary streams...'))
-  const h = await ingestHistory(db, sources.history, { host: 'local' })
-  const t = await ingestTodos(db, sources.todosDir, { host: 'local' })
-  const fh = await ingestFileHistory(db, sources.fileHistoryDir, { host: 'local' })
-  const ss = await ingestShellSnapshots(db, sources.shellSnapshotsDir, { host: 'local' })
+  const h = await ingestHistory(db, sources.history, { host })
+  const t = await ingestTodos(db, sources.todosDir, { host })
+  const fh = await ingestFileHistory(db, sources.fileHistoryDir, { host })
+  const ss = await ingestShellSnapshots(db, sources.shellSnapshotsDir, { host })
   console.log(pc.dim(`  history: ${h}, todos: ${t}, file snapshots: ${fh}, shell: ${ss}`))
 
   console.log(pc.dim('refreshing materialized views...'))
