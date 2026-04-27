@@ -1,14 +1,14 @@
 # Claude Code Analytics (`cca`)
 
-Logs every Claude Code session on this machine to Postgres and lets you review it locally — sessions list, replay, full-text search, and stats.
+Local-first observability for [Claude Code](https://claude.com/claude-code) sessions. Tails `~/.claude` (JSONL transcripts, hooks, history, todos, file snapshots), writes everything to a Postgres database on your machine, and ships a CLI plus a Next.js dashboard so you can review usage, replay sessions, search transcripts, and track cost.
 
-Three plans, all complete and merged to `main`:
+Three components, all on `localhost`:
 
-1. **Foundation** — Postgres schema, parsers for `~/.claude` JSONL/JSON files, backfill CLI.
-2. **Live capture + CLI** — `chokidar` tailer daemon on `localhost:9939`, hook ping endpoint, `cca` CLI (`status`, `sessions`, `replay`, `search`, `stats`, `tail`, `open`).
-3. **Web UI** — Next.js 16 App Router on `localhost:3939` with sessions list, session detail/replay, search, stats.
+- **Ingester** (`apps/ingester`) — `chokidar` tailer daemon on `:9939` watching `$CLAUDE_HOME`, plus a backfill CLI for the historical state and a `cca sync` runner that pulls remote machines via SSH+rsync (multi-host).
+- **CLI** (`apps/cli`) — `pnpm cca {status,sessions,replay,search,stats,sync,tail,open}` for terminal queries.
+- **Web** (`apps/web`) — Next.js 16 App Router on `:3939`. Cost command center on `/`, sessions list, session detail/replay, full-text search, behavior trends, per-host breakdown.
 
-See `STATUS.md` for the per-plan snapshot of what shipped and `docs/superpowers/specs/2026-04-19-claude-code-analytics-design.md` for the full design.
+See `STATUS.md` for what shipped when and `docs/superpowers/specs/` for the design docs.
 
 ## Architecture at a glance
 
@@ -66,7 +66,10 @@ pnpm db:seed
 # One-shot backfill of everything under $CLAUDE_HOME
 pnpm backfill
 
-# Install the Claude Code hook so live sessions ping the daemon
+# Install the Claude Code hook so live sessions ping the daemon.
+# This MERGES a `hooks` block into ~/.claude/settings.json — back it up first
+# if you've customized that file. The script preserves any existing hooks
+# (e.g. rtk) by keying on hook command paths.
 ./scripts/install-hooks.sh
 ```
 
@@ -290,11 +293,15 @@ The header shows a live-activity indicator driven by the daemon's SSE stream (`h
 ## Tests
 
 ```bash
-pnpm test       # 54 tests across core / parsers / db / ingester / cli
-pnpm typecheck
+pnpm test                          # ~113 tests across core / parsers / db / ingester / cli
+pnpm --filter @cca/web test        # ~66 web tests (queries + RTL component tests)
+pnpm typecheck                     # all 6 workspaces
+pnpm --filter @cca/web build       # next build with the new /hosts route
 ```
 
-Tests hit the real `claude_code_test` database, which Drizzle's `db:push` keeps in sync with `packages/db/src/schema/`. Test files are serialized via `fileParallelism: false` in `vitest.config.ts` — several writer tests share DB tables and `TRUNCATE` each other's state if run concurrently.
+The root `vitest` run uses `**/tests/**/*.test.ts` globs and so excludes the `apps/web` tests, which are co-located next to source (e.g. `apps/web/lib/queries/cost.test.ts`). Run them via the `--filter @cca/web` command above.
+
+Tests hit the real `claude_code_test` database, which `drizzle-kit push` keeps in sync with `packages/db/src/schema/`. Test files are serialized via `fileParallelism: false` in `vitest.config.ts` — several writer tests share DB tables and `TRUNCATE` each other's state if run concurrently.
 
 ## Notes on the drizzle-kit workaround
 
