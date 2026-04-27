@@ -19,4 +19,5 @@ export const sessions = pgTable('sessions', {
   estimatedCostUsd: numeric('estimated_cost_usd', { precision: 10, scale: 4 }),
   firstUserPrompt: text('first_user_prompt'),
   status: text('status'),
+  host: text('host').notNull().default('local'),
 })

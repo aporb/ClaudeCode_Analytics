@@ -16,6 +16,7 @@ export const toolCalls = pgTable(
     durationMs: integer('duration_ms'),
     isError: boolean('is_error'),
     parentMessageUuid: uuid('parent_message_uuid'),
+    host: text('host').notNull().default('local'),
   },
   (t) => [
     index('tool_calls_name_idx').on(t.toolName, t.timestamp.desc()),
