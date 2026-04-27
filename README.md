@@ -39,15 +39,15 @@ Both are started automatically on first terminal open via snippets in `~/.zshrc`
 - macOS (this setup is macOS-specific because of the launchd/zshrc choices and `~/.claude` path).
 - Node 22+ and pnpm 9+ (`corepack enable && corepack prepare pnpm@latest --activate`).
 - Docker Desktop running with the existing Supabase container `supabase_db_mission-control-saas` exposing Postgres 17 on `localhost:54322`.
-- `.env.local` at the repo root:
+- `.env.local` at the repo root. The defaults in `.env.example` work as-is for
+  the standard Supabase docker setup — just copy and run:
 
   ```bash
-  CCA_DATABASE_URL=postgresql://postgres:postgres@localhost:54322/claude_code
-  CCA_DATABASE_URL_TEST=postgresql://postgres:postgres@localhost:54322/claude_code_test
-  CLAUDE_HOME=/Users/<you>/.claude
+  cp .env.example .env.local
   ```
 
-  See `.env.example` for the shape.
+  `CLAUDE_HOME` is optional; if unset, the ingester defaults to `$HOME/.claude`
+  at runtime. Override only if your data lives elsewhere.
 
 ## First-time setup
 
