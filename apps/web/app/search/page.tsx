@@ -6,6 +6,38 @@ import { resolveSince } from '@/lib/since'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
 
+/**
+ * Render a ts_headline snippet safely. ts_headline output looks like
+ *   "lorem ipsum <b>match</b> dolor <b>sit</b> amet"
+ * but Postgres does NOT escape the underlying message text — a user message
+ * containing literal HTML would survive intact and reach the DOM if injected
+ * verbatim. We split on the <b>…</b> sentinel and let React auto-escape every
+ * non-sentinel chunk; the worst case (a user typing a literal <b>foo</b>) is a
+ * spurious highlight, never script execution.
+ */
+function Snippet({ text }: { text: string }) {
+  const parts = text.split(/(<b>[^<]*<\/b>)/g)
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (part.startsWith('<b>') && part.endsWith('</b>')) {
+          const inner = part.slice(3, -4)
+          return (
+            <b
+              // biome-ignore lint/suspicious/noArrayIndexKey: snippet is read-only, keys are stable per render
+              key={i}
+              className="bg-yellow-200/50 dark:bg-yellow-500/20"
+            >
+              {inner}
+            </b>
+          )
+        }
+        return <span key={i}>{part}</span>
+      })}
+    </>
+  )
+}
+
 export default async function SearchPage({
   searchParams,
 }: {
@@ -77,16 +109,9 @@ export default async function SearchPage({
             <div className="text-xs text-muted-foreground mb-1">
               {r.projectPath ?? '(no project)'}
             </div>
-            <div
-              className="text-sm"
-              // ts_headline only emits <b>…</b> — safe to inject
-              dangerouslySetInnerHTML={{
-                __html: r.snippet.replace(
-                  /<b>/g,
-                  '<b class="bg-yellow-200/50 dark:bg-yellow-500/20">',
-                ),
-              }}
-            />
+            <div className="text-sm">
+              <Snippet text={r.snippet} />
+            </div>
           </li>
         ))}
       </ul>

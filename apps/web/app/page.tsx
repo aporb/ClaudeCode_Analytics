@@ -7,6 +7,7 @@ import { CostDistributionCard } from '@/components/cost/CostDistributionCard'
 import { KpiStrip } from '@/components/cost/KpiStrip'
 import { TopCostSessions } from '@/components/cost/TopCostSessions'
 import { computeBriefing } from '@/lib/briefing'
+import { parseHosts } from '@/lib/hosts'
 import {
   getActiveHoursHeatmap,
   getCacheHitTrend,
@@ -16,19 +17,23 @@ import {
   getTopCostSessions,
 } from '@/lib/queries/cost'
 import { resolveSince } from '@/lib/since'
+import { cookies } from 'next/headers'
 
 export default async function CostHome({
   searchParams,
 }: { searchParams: Promise<{ since?: string; host?: string | string[] }> }) {
   const sp = await searchParams
   const window = resolveSince(sp.since)
+  const cookieStore = await cookies()
+  const cookieHosts = cookieStore.get('cca-hosts')?.value ?? null
+  const hosts = parseHosts({ searchParams: sp, cookieValue: cookieHosts })
   const [kpis, spend, top, dist, cache, heatmap] = await Promise.all([
-    getCostKpis(window),
-    getSpendStackedByModel(window),
-    getTopCostSessions(window, 5),
-    getCostDistribution(window),
-    getCacheHitTrend(window),
-    getActiveHoursHeatmap(window),
+    getCostKpis(window, hosts),
+    getSpendStackedByModel(window, hosts),
+    getTopCostSessions(window, 5, hosts),
+    getCostDistribution(window, hosts),
+    getCacheHitTrend(window, hosts),
+    getActiveHoursHeatmap(window, hosts),
   ])
 
   const yesterdayStart = new Date()
@@ -36,7 +41,7 @@ export default async function CostHome({
   yesterdayStart.setDate(yesterdayStart.getDate() - 1)
   const todayStart = new Date()
   todayStart.setHours(0, 0, 0, 0)
-  const yesterdayKpis = await getCostKpis({ start: yesterdayStart, end: todayStart })
+  const yesterdayKpis = await getCostKpis({ start: yesterdayStart, end: todayStart }, hosts)
 
   const topProjectRow = top[0]
   const briefing = computeBriefing({

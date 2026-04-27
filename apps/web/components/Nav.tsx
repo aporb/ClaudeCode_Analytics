@@ -11,6 +11,7 @@ const items = [
   { href: '/sessions', label: 'Sessions' },
   { href: '/search', label: 'Search' },
   { href: '/stats', label: 'Behavior' },
+  { href: '/hosts', label: 'Hosts' },
 ] as const
 
 export async function Nav({ since }: { since: string | undefined }) {

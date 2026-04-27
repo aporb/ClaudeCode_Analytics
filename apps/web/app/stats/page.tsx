@@ -3,6 +3,7 @@ import { SubagentHistogram } from '@/components/charts/SubagentHistogram'
 import { TokenVelocityScatter } from '@/components/charts/TokenVelocityScatter'
 import { ToolErrorRateTrend } from '@/components/charts/ToolErrorRateTrend'
 import { Badge } from '@/components/ui/badge'
+import { parseHosts } from '@/lib/hosts'
 import {
   getCacheHitByModel,
   getLatencyPercentiles,
@@ -11,6 +12,7 @@ import {
   getToolErrorRateTrend,
 } from '@/lib/queries/behavior'
 import { resolveSince } from '@/lib/since'
+import { cookies } from 'next/headers'
 
 function modelChipClass(model: string): string {
   if (model.includes('opus')) return 'border-[hsl(var(--model-opus))] text-[hsl(var(--model-opus))]'
@@ -23,15 +25,18 @@ function modelChipClass(model: string): string {
 
 export default async function BehaviorPage({
   searchParams,
-}: { searchParams: Promise<{ since?: string }> }) {
+}: { searchParams: Promise<{ since?: string; host?: string | string[] }> }) {
   const sp = await searchParams
   const window = resolveSince(sp.since)
+  const cookieStore = await cookies()
+  const cookieHosts = cookieStore.get('cca-hosts')?.value ?? null
+  const hosts = parseHosts({ searchParams: sp, cookieValue: cookieHosts })
   const [errors, latency, subagents, velocity, cacheByModel] = await Promise.all([
-    getToolErrorRateTrend(window),
-    getLatencyPercentiles(window),
-    getSubagentHistogram(window),
-    getTokenVelocity(window),
-    getCacheHitByModel(window),
+    getToolErrorRateTrend(window, hosts),
+    getLatencyPercentiles(window, hosts),
+    getSubagentHistogram(window, hosts),
+    getTokenVelocity(window, hosts),
+    getCacheHitByModel(window, hosts),
   ])
   return (
     <div className="space-y-4">

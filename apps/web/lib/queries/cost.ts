@@ -12,6 +12,22 @@ function pgTextArray(values: string[]) {
   )}]::text[]`
 }
 
+/**
+ * Build an `AND host = ANY(ARRAY[…]::text[])` SQL fragment for the host
+ * filter, or an empty fragment when no filter is requested. `null` and the
+ * empty array are both treated as "no filter" — guarding against an explicit
+ * empty array prevents `host = ANY(ARRAY[]::text[])` from matching zero rows.
+ *
+ * Pass an alias-qualified column name (e.g. `m.host`) when the query joins
+ * multiple host-bearing tables.
+ */
+function hostAndFragment(column: 'host' | 'm.host' | 'u.host', hosts: string[] | null | undefined) {
+  if (!hosts || hosts.length === 0) return sql``
+  if (column === 'host') return sql`AND host = ANY(${pgTextArray(hosts)})`
+  if (column === 'm.host') return sql`AND m.host = ANY(${pgTextArray(hosts)})`
+  return sql`AND u.host = ANY(${pgTextArray(hosts)})`
+}
+
 export interface Window {
   start: Date
   end: Date
@@ -43,8 +59,7 @@ export async function getTokenTotals(opts: {
   const db = getDb()
   const startTs = opts.sinceStart.toISOString()
   const endTs = opts.sinceEnd.toISOString()
-  const hostFilter =
-    opts.hosts && opts.hosts.length > 0 ? sql`AND host = ANY(${pgTextArray(opts.hosts)})` : sql``
+  const hostFilter = hostAndFragment('host', opts.hosts)
   const rows = (await db.execute<{ input: string; output: string; cc: string; cr: string }>(sql`
     SELECT
       COALESCE(SUM(total_input_tokens), 0)::bigint    AS input,
@@ -87,7 +102,7 @@ function ds(d: Date): string {
   return d.toISOString().slice(0, 10)
 }
 
-export async function getCostKpis(w: Window): Promise<CostKpis> {
+export async function getCostKpis(w: Window, hosts: string[] | null = null): Promise<CostKpis> {
   const db = getDb()
   const prior = priorWindow(w)
   const todayStart = new Date()
@@ -99,12 +114,20 @@ export async function getCostKpis(w: Window): Promise<CostKpis> {
   const pStart = ts(prior.start)
   const pEnd = ts(prior.end)
 
+  // Sessions-table host filter (sessions.host).
+  const sessHost = hostAndFragment('host', hosts)
+  // usage_daily has its own host column (added in 0011_multi_host.sql).
+  const udHost = hostAndFragment('host', hosts)
+  // messages-table host filter (messages.host) for the model-cost queries.
+  const mHost = hostAndFragment('m.host', hosts)
+
   const costRows = (await db.execute<{ today: string; window: string; window_prior: string }>(sql`
     SELECT
       COALESCE(SUM(estimated_cost_usd) FILTER (WHERE started_at >= ${todayStr}::timestamptz), 0)::float8 AS today,
       COALESCE(SUM(estimated_cost_usd) FILTER (WHERE started_at >= ${wStart}::timestamptz AND started_at <= ${wEnd}::timestamptz), 0)::float8 AS window,
       COALESCE(SUM(estimated_cost_usd) FILTER (WHERE started_at >= ${pStart}::timestamptz AND started_at <= ${pEnd}::timestamptz), 0)::float8 AS window_prior
     FROM sessions
+    WHERE 1=1 ${sessHost}
   `)) as unknown as Array<{ today: string; window: string; window_prior: string }>
   const cost = costRows[0]
 
@@ -125,6 +148,7 @@ export async function getCostKpis(w: Window): Promise<CostKpis> {
       COALESCE(SUM(input_tokens) FILTER (WHERE day::date >= ${pDayStart}::date AND day::date <= ${pDayEnd}::date), 0)::bigint AS in_tok_prior,
       COALESCE(SUM(cache_read) FILTER (WHERE day::date >= ${pDayStart}::date AND day::date <= ${pDayEnd}::date), 0)::bigint AS cache_prior
     FROM usage_daily
+    WHERE 1=1 ${udHost}
   `)) as unknown as Array<{
     in_tok: string
     cache: string
@@ -147,7 +171,7 @@ export async function getCostKpis(w: Window): Promise<CostKpis> {
     ), 0)::float8 AS cost
     FROM messages m
     LEFT JOIN model_pricing mp ON mp.model = m.model
-    WHERE m.role = 'assistant' AND m.timestamp >= ${wStart}::timestamptz AND m.timestamp <= ${wEnd}::timestamptz
+    WHERE m.role = 'assistant' AND m.timestamp >= ${wStart}::timestamptz AND m.timestamp <= ${wEnd}::timestamptz ${mHost}
     GROUP BY m.model
     ORDER BY cost DESC
     LIMIT 5
@@ -169,7 +193,7 @@ export async function getCostKpis(w: Window): Promise<CostKpis> {
     ), 0)::float8 AS cost
     FROM messages m
     LEFT JOIN model_pricing mp ON mp.model = m.model
-    WHERE m.role = 'assistant' AND m.timestamp >= ${pStart}::timestamptz AND m.timestamp <= ${pEnd}::timestamptz
+    WHERE m.role = 'assistant' AND m.timestamp >= ${pStart}::timestamptz AND m.timestamp <= ${pEnd}::timestamptz ${mHost}
     GROUP BY m.model
   `)) as unknown as Array<{ model: string | null; cost: string }>
   const totalPriorCost = modelRowsPrior.reduce((s, r) => s + Number(r.cost), 0)
@@ -180,7 +204,7 @@ export async function getCostKpis(w: Window): Promise<CostKpis> {
     priorTopModel && totalPriorCost > 0 ? Number(priorTopModel.cost) / totalPriorCost : 0
 
   const active = (await db.execute<{ session_id: string; project_path: string | null }>(sql`
-    SELECT session_id, project_path FROM sessions WHERE status = 'active' ORDER BY started_at DESC LIMIT 3
+    SELECT session_id, project_path FROM sessions WHERE status = 'active' ${sessHost} ORDER BY started_at DESC LIMIT 3
   `)) as unknown as Array<{ session_id: string; project_path: string | null }>
 
   return {
@@ -198,10 +222,11 @@ export async function getCostKpis(w: Window): Promise<CostKpis> {
   }
 }
 
-export async function getSpendStackedByModel(w: Window) {
+export async function getSpendStackedByModel(w: Window, hosts: string[] | null = null) {
   const db = getDb()
   const wDayStart = ds(w.start)
   const wDayEnd = ds(w.end)
+  const udHost = hostAndFragment('u.host', hosts)
   const rows = (await db.execute<{ day: string; model: string; cost: string }>(sql`
     SELECT u.day::text AS day, u.model, COALESCE(SUM(
       u.input_tokens * mp.input_per_mtok / 1e6
@@ -212,17 +237,18 @@ export async function getSpendStackedByModel(w: Window) {
     FROM usage_daily u
     LEFT JOIN model_pricing mp ON mp.model = u.model
     WHERE u.day::date >= ${wDayStart}::date
-      AND u.day::date <= ${wDayEnd}::date
+      AND u.day::date <= ${wDayEnd}::date ${udHost}
     GROUP BY u.day, u.model
     ORDER BY u.day ASC
   `)) as unknown as Array<{ day: string; model: string; cost: string }>
   return rows.map((r) => ({ day: r.day.slice(0, 10), model: r.model, cost: Number(r.cost) }))
 }
 
-export async function getTopCostSessions(w: Window, limit = 5) {
+export async function getTopCostSessions(w: Window, limit = 5, hosts: string[] | null = null) {
   const db = getDb()
   const wStart = ts(w.start)
   const wEnd = ts(w.end)
+  const sessHost = hostAndFragment('host', hosts)
   const rows = (await db.execute<{
     session_id: string
     project_path: string | null
@@ -234,7 +260,7 @@ export async function getTopCostSessions(w: Window, limit = 5) {
   }>(sql`
     SELECT session_id, project_path, started_at::text, duration_sec, message_count, models_used, estimated_cost_usd::float8::text AS cost
     FROM sessions
-    WHERE started_at >= ${wStart}::timestamptz AND started_at <= ${wEnd}::timestamptz AND estimated_cost_usd IS NOT NULL
+    WHERE started_at >= ${wStart}::timestamptz AND started_at <= ${wEnd}::timestamptz AND estimated_cost_usd IS NOT NULL ${sessHost}
     ORDER BY estimated_cost_usd DESC NULLS LAST
     LIMIT ${limit}
   `)) as unknown as Array<{
@@ -257,10 +283,11 @@ export async function getTopCostSessions(w: Window, limit = 5) {
   }))
 }
 
-export async function getCostDistribution(w: Window) {
+export async function getCostDistribution(w: Window, hosts: string[] | null = null) {
   const db = getDb()
   const wStart = ts(w.start)
   const wEnd = ts(w.end)
+  const sessHost = hostAndFragment('host', hosts)
   const rows = (await db.execute<{
     p50: string
     p95: string
@@ -275,7 +302,7 @@ export async function getCostDistribution(w: Window) {
       MAX(estimated_cost_usd)::float8::text AS max,
       COUNT(*)::int AS n
     FROM sessions
-    WHERE started_at >= ${wStart}::timestamptz AND started_at <= ${wEnd}::timestamptz AND estimated_cost_usd IS NOT NULL
+    WHERE started_at >= ${wStart}::timestamptz AND started_at <= ${wEnd}::timestamptz AND estimated_cost_usd IS NOT NULL ${sessHost}
   `)) as unknown as Array<{ p50: string; p95: string; p99: string; max: string; n: string }>
   const r = rows[0]
   return {
@@ -287,10 +314,11 @@ export async function getCostDistribution(w: Window) {
   }
 }
 
-export async function getCacheHitTrend(w: Window) {
+export async function getCacheHitTrend(w: Window, hosts: string[] | null = null) {
   const db = getDb()
   const wDayStart = ds(w.start)
   const wDayEnd = ds(w.end)
+  const udHost = hostAndFragment('host', hosts)
   const rows = (await db.execute<{ day: string; hit_pct: string }>(sql`
     SELECT day::text AS day,
            CASE WHEN SUM(input_tokens + cache_read) > 0
@@ -298,23 +326,24 @@ export async function getCacheHitTrend(w: Window) {
                 ELSE 0 END::float8::text AS hit_pct
     FROM usage_daily
     WHERE day::date >= ${wDayStart}::date
-      AND day::date <= ${wDayEnd}::date
+      AND day::date <= ${wDayEnd}::date ${udHost}
     GROUP BY day ORDER BY day ASC
   `)) as unknown as Array<{ day: string; hit_pct: string }>
   return rows.map((r) => ({ day: r.day.slice(0, 10), hitPct: Number(r.hit_pct) }))
 }
 
-export async function getActiveHoursHeatmap(w: Window) {
+export async function getActiveHoursHeatmap(w: Window, hosts: string[] | null = null) {
   const minStart = new Date(Math.min(w.start.getTime(), Date.now() - 30 * 24 * 60 * 60 * 1000))
   const db = getDb()
   const minStartStr = ts(minStart)
   const wEnd = ts(w.end)
+  const sessHost = hostAndFragment('host', hosts)
   const rows = (await db.execute<{ dow: string; h: string; n: string }>(sql`
     SELECT EXTRACT(dow FROM started_at AT TIME ZONE 'America/New_York')::int AS dow,
            EXTRACT(hour FROM started_at AT TIME ZONE 'America/New_York')::int AS h,
            COUNT(*)::int AS n
     FROM sessions
-    WHERE started_at >= ${minStartStr}::timestamptz AND started_at <= ${wEnd}::timestamptz
+    WHERE started_at >= ${minStartStr}::timestamptz AND started_at <= ${wEnd}::timestamptz ${sessHost}
     GROUP BY 1, 2
   `)) as unknown as Array<{ dow: string; h: string; n: string }>
   const grid: number[] = new Array(7 * 24).fill(0)

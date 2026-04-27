@@ -12,16 +12,34 @@ function ts(d: Date): string {
   return d.toISOString()
 }
 
-export async function getToolErrorRateTrend(w: Window) {
+/** Build a Postgres ARRAY[…]::text[] SQL chunk from a JS string array. */
+function pgTextArray(values: string[]) {
+  return sql`ARRAY[${sql.join(
+    values.map((v) => sql`${v}`),
+    sql`, `,
+  )}]::text[]`
+}
+
+/**
+ * Build an `AND host = ANY(ARRAY[…]::text[])` fragment, or empty when no
+ * filter applies. `null` / empty array → no filter.
+ */
+function hostAndFragment(hosts: string[] | null | undefined) {
+  if (!hosts || hosts.length === 0) return sql``
+  return sql`AND host = ANY(${pgTextArray(hosts)})`
+}
+
+export async function getToolErrorRateTrend(w: Window, hosts: string[] | null = null) {
   const db = getDb()
   const wStart = ts(w.start)
   const wEnd = ts(w.end)
+  const hostFilter = hostAndFragment(hosts)
   const rows = (await db.execute<{ day: string; calls: string; errors: string }>(sql`
     SELECT date_trunc('day', timestamp)::date::text AS day,
            COUNT(*)::int AS calls,
            COUNT(*) FILTER (WHERE is_error)::int AS errors
     FROM tool_calls
-    WHERE timestamp >= ${wStart}::timestamptz AND timestamp <= ${wEnd}::timestamptz
+    WHERE timestamp >= ${wStart}::timestamptz AND timestamp <= ${wEnd}::timestamptz ${hostFilter}
     GROUP BY 1 ORDER BY 1 ASC
   `)) as unknown as Array<{ day: string; calls: string; errors: string }>
   return rows.map((r) => ({
@@ -32,10 +50,11 @@ export async function getToolErrorRateTrend(w: Window) {
   }))
 }
 
-export async function getLatencyPercentiles(w: Window) {
+export async function getLatencyPercentiles(w: Window, hosts: string[] | null = null) {
   const db = getDb()
   const wStart = ts(w.start)
   const wEnd = ts(w.end)
+  const hostFilter = hostAndFragment(hosts)
   const rows = (await db.execute<{ day: string; p50: string; p95: string }>(sql`
     WITH pairs AS (
       SELECT
@@ -47,7 +66,7 @@ export async function getLatencyPercentiles(w: Window) {
         LEAD(role) OVER (PARTITION BY session_id ORDER BY timestamp) AS next_role
       FROM messages
       WHERE timestamp >= ${wStart}::timestamptz AND timestamp <= ${wEnd}::timestamptz
-        AND is_sidechain = false
+        AND is_sidechain = false ${hostFilter}
     )
     SELECT day::text, percentile_cont(0.5) WITHIN GROUP (ORDER BY gap)::float8::text AS p50,
            percentile_cont(0.95) WITHIN GROUP (ORDER BY gap)::float8::text AS p95
@@ -62,23 +81,25 @@ export async function getLatencyPercentiles(w: Window) {
   }))
 }
 
-export async function getSubagentHistogram(w: Window) {
+export async function getSubagentHistogram(w: Window, hosts: string[] | null = null) {
   const db = getDb()
   const wStart = ts(w.start)
   const wEnd = ts(w.end)
+  const hostFilter = hostAndFragment(hosts)
   const rows = (await db.execute<{ bucket: string; n: string }>(sql`
     SELECT LEAST(subagent_count, 6)::int AS bucket, COUNT(*)::int AS n
     FROM sessions
-    WHERE started_at >= ${wStart}::timestamptz AND started_at <= ${wEnd}::timestamptz AND subagent_count IS NOT NULL
+    WHERE started_at >= ${wStart}::timestamptz AND started_at <= ${wEnd}::timestamptz AND subagent_count IS NOT NULL ${hostFilter}
     GROUP BY 1 ORDER BY 1 ASC
   `)) as unknown as Array<{ bucket: string; n: string }>
   return rows.map((r) => ({ bucket: Number(r.bucket), count: Number(r.n) }))
 }
 
-export async function getTokenVelocity(w: Window) {
+export async function getTokenVelocity(w: Window, hosts: string[] | null = null) {
   const db = getDb()
   const wStart = ts(w.start)
   const wEnd = ts(w.end)
+  const hostFilter = hostAndFragment(hosts)
   const rows = (await db.execute<{
     session_id: string
     started_at: string
@@ -92,7 +113,7 @@ export async function getTokenVelocity(w: Window) {
            estimated_cost_usd::float8::text AS cost
     FROM sessions
     WHERE started_at >= ${wStart}::timestamptz AND started_at <= ${wEnd}::timestamptz
-      AND duration_sec IS NOT NULL AND duration_sec > 0
+      AND duration_sec IS NOT NULL AND duration_sec > 0 ${hostFilter}
     ORDER BY started_at ASC
   `)) as unknown as Array<{
     session_id: string
@@ -108,10 +129,11 @@ export async function getTokenVelocity(w: Window) {
   }))
 }
 
-export async function getCacheHitByModel(w: Window) {
+export async function getCacheHitByModel(w: Window, hosts: string[] | null = null) {
   const db = getDb()
   const wStart = ts(w.start)
   const wEnd = ts(w.end)
+  const hostFilter = hostAndFragment(hosts)
   const rows = (await db.execute<{ model: string | null; hit: string }>(sql`
     SELECT model,
            CASE WHEN SUM(input_tokens + cache_read_tokens) > 0
@@ -119,7 +141,7 @@ export async function getCacheHitByModel(w: Window) {
                 ELSE 0 END::float8::text AS hit
     FROM messages
     WHERE timestamp >= ${wStart}::timestamptz AND timestamp <= ${wEnd}::timestamptz
-      AND role = 'assistant' AND model IS NOT NULL
+      AND role = 'assistant' AND model IS NOT NULL ${hostFilter}
     GROUP BY model ORDER BY hit DESC
   `)) as unknown as Array<{ model: string | null; hit: string }>
   return rows.map((r) => ({ model: r.model ?? '(none)', hitPct: Number(r.hit) }))
