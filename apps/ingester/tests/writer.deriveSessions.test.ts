@@ -64,4 +64,40 @@ describe('rollup sessions', () => {
     expect(Number(rows[0]?.estimated_cost_usd)).toBeCloseTo(10.5, 2) // 1M*3 + 0.5M*15
     expect(rows[0]?.first_user_prompt).toBe('first prompt')
   })
+
+  it('derives sessions.host from events.host and is idempotent', async () => {
+    await sql`DELETE FROM events WHERE session_id = 's-roll-host'`
+    await sql`DELETE FROM sessions WHERE session_id = 's-roll-host'`
+
+    const e1: ParsedEvent = {
+      uuid: '00000000-0000-0000-0000-000000009101', sessionId: 's-roll-host', parentUuid: null,
+      type: 'user', subtype: 'user_message', timestamp: new Date('2026-04-02T00:00:00Z'),
+      cwd: '/p', projectPath: '/p', gitBranch: 'main', ccVersion: '2.1.81', entrypoint: 'cli',
+      isSidechain: false, agentId: null, requestId: null, sourceFile: '/x',
+      payload: { message: { role: 'user', content: 'hi' } },
+    }
+    const e2: ParsedEvent = {
+      uuid: '00000000-0000-0000-0000-000000009102', sessionId: 's-roll-host', parentUuid: e1.uuid,
+      type: 'assistant', subtype: 'assistant_message', timestamp: new Date('2026-04-02T00:01:00Z'),
+      cwd: '/p', projectPath: '/p', gitBranch: 'main', ccVersion: '2.1.81', entrypoint: 'cli',
+      isSidechain: false, agentId: null, requestId: null, sourceFile: '/x',
+      payload: { message: {
+        role: 'assistant', model: 'claude-sonnet-4-6',
+        content: [{ type: 'text', text: 'ok' }],
+        usage: { input_tokens: 100, output_tokens: 50, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+      }},
+    }
+    await insertEventsBatch(db, [e1, e2], { host: 'hostinger' })
+    await deriveMessagesFromEvents(db, [e1, e2], { host: 'hostinger' })
+    await rollupSessions(db, ['s-roll-host'])
+
+    const rows1 = await sql`SELECT host FROM sessions WHERE session_id = 's-roll-host'`
+    expect(rows1).toHaveLength(1)
+    expect(rows1[0]?.host).toBe('hostinger')
+
+    // Re-rollup: host should remain unchanged.
+    await rollupSessions(db, ['s-roll-host'])
+    const rows2 = await sql`SELECT host FROM sessions WHERE session_id = 's-roll-host'`
+    expect(rows2[0]?.host).toBe('hostinger')
+  })
 })

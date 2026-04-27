@@ -14,7 +14,7 @@ export async function rollupSessions(db: Db, sessionIds: string[]): Promise<void
       message_count, tool_call_count, subagent_count,
       git_branch, cc_version, models_used,
       total_input_tokens, total_output_tokens, total_cache_creation, total_cache_read,
-      estimated_cost_usd, first_user_prompt, status
+      estimated_cost_usd, first_user_prompt, status, host
     )
     SELECT
       e.session_id,
@@ -51,7 +51,8 @@ export async function rollupSessions(db: Db, sessionIds: string[]): Promise<void
         WHERE m3.session_id = e.session_id AND m3.role = 'user'
         ORDER BY m3.timestamp ASC LIMIT 1
       ) AS first_user_prompt,
-      'ended' AS status
+      'ended' AS status,
+      MIN(e.host) AS host
     FROM events e
     LEFT JOIN messages m ON m.uuid = e.uuid
     WHERE e.session_id = ANY(ARRAY[${sql.join(sessionIds.map(id => sql`${id}`), sql`, `)}])
@@ -73,6 +74,7 @@ export async function rollupSessions(db: Db, sessionIds: string[]): Promise<void
       total_cache_read   = EXCLUDED.total_cache_read,
       estimated_cost_usd = EXCLUDED.estimated_cost_usd,
       first_user_prompt  = EXCLUDED.first_user_prompt,
-      status             = CASE WHEN sessions.status = 'active' THEN 'active' ELSE EXCLUDED.status END
+      status             = CASE WHEN sessions.status = 'active' THEN 'active' ELSE EXCLUDED.status END,
+      host               = EXCLUDED.host
   `)
 }
