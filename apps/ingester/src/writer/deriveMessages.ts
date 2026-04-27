@@ -26,7 +26,7 @@ function flattenTextContent(content: unknown): string {
   return parts.join('\n')
 }
 
-export async function deriveMessagesFromEvents(db: Db, batch: ParsedEvent[]): Promise<number> {
+export async function deriveMessagesFromEvents(db: Db, batch: ParsedEvent[], opts: { host: string }): Promise<number> {
   const rows: Array<typeof messages.$inferInsert> = []
   for (const e of batch) {
     if (e.type !== 'assistant' && e.type !== 'user') continue
@@ -53,6 +53,7 @@ export async function deriveMessagesFromEvents(db: Db, batch: ParsedEvent[]): Pr
       cacheCreationTokens: msg.usage?.cache_creation_input_tokens ?? null,
       cacheReadTokens: msg.usage?.cache_read_input_tokens ?? null,
       isSidechain: e.isSidechain,
+      host: opts.host,
     })
   }
   if (rows.length === 0) return 0
