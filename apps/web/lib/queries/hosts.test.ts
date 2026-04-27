@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeAll, afterAll } from 'vitest'
 import postgres from 'postgres'
-import { getHostStats } from './hosts'
+import { getFailingHosts, getHostStats } from './hosts'
 
 const URL = process.env.CCA_DATABASE_URL
 
@@ -87,5 +87,52 @@ describe('getHostStats', () => {
     expect(b!.topModel).toBe('claude-opus-4-7')
     expect(b!.consecutiveErrors).toBe(3)
     expect(b!.lastError).toBe('connection refused')
+  })
+})
+
+// Banner threshold per spec §6.4 / §8.4: surface only when consecutive_errors >= 3.
+// Seed four host_sync_state rows at 0/2/3/5 errors and assert exactly the 3 and 5
+// rows come back, in deterministic order (most recent failure first).
+describe('getFailingHosts', () => {
+  let sql: postgres.Sql
+  const HOSTS = [
+    '__test_fail_0__',
+    '__test_fail_2__',
+    '__test_fail_3__',
+    '__test_fail_5__',
+  ] as const
+
+  beforeAll(async () => {
+    if (!URL) throw new Error('CCA_DATABASE_URL is not set')
+    sql = postgres(URL, { max: 2, prepare: false })
+
+    await sql`DELETE FROM host_sync_state WHERE host IN ${sql(HOSTS)}`
+
+    await sql`
+      INSERT INTO host_sync_state (host, consecutive_errors, last_error, last_error_at)
+      VALUES
+        (${HOSTS[0]}, 0, NULL, NULL),
+        (${HOSTS[1]}, 2, 'flaky once', '2099-02-01T00:00:00Z'),
+        (${HOSTS[2]}, 3, 'ssh: connect to host failed', '2099-02-02T00:00:00Z'),
+        (${HOSTS[3]}, 5, 'rsync exit 255', '2099-02-03T00:00:00Z')
+    `
+  })
+
+  afterAll(async () => {
+    await sql`DELETE FROM host_sync_state WHERE host IN ${sql(HOSTS)}`
+    await sql.end()
+  })
+
+  it('returns only rows with consecutive_errors >= 3', async () => {
+    const rows = await getFailingHosts()
+    const subset = rows.filter((r) => (HOSTS as readonly string[]).includes(r.host))
+    const byHost = new Map(subset.map((r) => [r.host, r]))
+    expect(byHost.has('__test_fail_0__')).toBe(false)
+    expect(byHost.has('__test_fail_2__')).toBe(false)
+    expect(byHost.get('__test_fail_3__')?.consecutiveErrors).toBe(3)
+    expect(byHost.get('__test_fail_5__')?.consecutiveErrors).toBe(5)
+    expect(byHost.get('__test_fail_3__')?.lastError).toBe('ssh: connect to host failed')
+    expect(byHost.get('__test_fail_5__')?.lastError).toBe('rsync exit 255')
+    expect(byHost.get('__test_fail_5__')?.lastErrorAt).toBeInstanceOf(Date)
   })
 })

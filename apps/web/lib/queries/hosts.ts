@@ -20,6 +20,51 @@ export async function getAllHosts(): Promise<string[]> {
   return rows.map((r) => r.host).filter(Boolean)
 }
 
+export interface FailingHost {
+  host: string
+  consecutiveErrors: number
+  lastError: string | null
+  lastErrorAt: Date | null
+}
+
+/**
+ * Returns hosts whose `consecutive_errors >= 3` — the spec §6.4/§8.4 threshold
+ * at which we surface a sync-failure banner. Sorted by most-recent failure
+ * first so the banner highlights the freshest breakage; ties broken by host.
+ *
+ * Returns an empty array (never throws) if `host_sync_state` is empty. Callers
+ * that need DB-unavailable resilience should still wrap in try/catch.
+ */
+export async function getFailingHosts(): Promise<FailingHost[]> {
+  const db = getDb()
+  const rows = (await db.execute<{
+    host: string
+    consecutive_errors: number
+    last_error: string | null
+    last_error_at: string | null
+  }>(sql`
+    SELECT
+      host,
+      consecutive_errors,
+      last_error,
+      last_error_at::text AS last_error_at
+    FROM host_sync_state
+    WHERE consecutive_errors >= 3
+    ORDER BY last_error_at DESC NULLS LAST, host ASC
+  `)) as unknown as Array<{
+    host: string
+    consecutive_errors: number
+    last_error: string | null
+    last_error_at: string | null
+  }>
+  return rows.map((r) => ({
+    host: r.host,
+    consecutiveErrors: Number(r.consecutive_errors),
+    lastError: r.last_error,
+    lastErrorAt: r.last_error_at ? new Date(r.last_error_at) : null,
+  }))
+}
+
 export interface HostStats {
   host: string
   sessionCount: number

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { Nav } from '@/components/Nav'
+import { SyncFailureBanner } from '@/components/SyncFailureBanner'
 
 export const metadata: Metadata = {
   title: 'Claude Code Analytics',
@@ -11,6 +12,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className="font-mono antialiased bg-background text-foreground min-h-screen">
+        <SyncFailureBanner />
         <Nav since={undefined} />
         <div className="max-w-7xl mx-auto px-6 py-8">{children}</div>
       </body>
