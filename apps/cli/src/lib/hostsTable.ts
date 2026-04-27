@@ -61,6 +61,7 @@ interface Col {
   widths: number[]
 }
 
+// biome-ignore lint/suspicious/noControlCharactersInRegex: ESC (\x1b) is the literal start byte of ANSI escape sequences — exactly what we want to strip.
 const ANSI_RE = /\x1b\[[0-9;]*m/g
 function visibleWidth(s: string): number {
   return s.replace(ANSI_RE, '').length

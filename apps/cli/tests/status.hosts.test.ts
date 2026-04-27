@@ -8,6 +8,7 @@ import {
   sortHosts,
 } from '../src/lib/hostsTable.js'
 
+// biome-ignore lint/suspicious/noControlCharactersInRegex: ANSI escape sequences start with \x1b — we want to strip them in test assertions.
 const ANSI_RE = /\x1b\[[0-9;]*m/g
 const strip = (s: string) => s.replace(ANSI_RE, '')
 

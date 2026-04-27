@@ -34,19 +34,29 @@ export function SearchForm() {
 
   return (
     <form onSubmit={onSubmit} className="flex flex-wrap gap-3 mb-6 items-end">
-      <label className="flex flex-col gap-1 flex-1 min-w-64">
-        <span className="text-xs text-muted-foreground">query</span>
+      <div className="flex flex-col gap-1 flex-1 min-w-64">
+        <label htmlFor="search-q" className="text-xs text-muted-foreground">
+          query
+        </label>
         <Input
+          id="search-q"
           name="q"
           defaultValue={params.get('q') ?? ''}
           placeholder="full-text search"
           autoFocus
         />
-      </label>
-      <label className="flex flex-col gap-1">
-        <span className="text-xs text-muted-foreground">project</span>
-        <Input name="project" defaultValue={params.get('project') ?? ''} className="w-48" />
-      </label>
+      </div>
+      <div className="flex flex-col gap-1">
+        <label htmlFor="search-project" className="text-xs text-muted-foreground">
+          project
+        </label>
+        <Input
+          id="search-project"
+          name="project"
+          defaultValue={params.get('project') ?? ''}
+          className="w-48"
+        />
+      </div>
       <div className="flex flex-col gap-1">
         <span className="text-xs text-muted-foreground">models</span>
         <div className="flex gap-1">
