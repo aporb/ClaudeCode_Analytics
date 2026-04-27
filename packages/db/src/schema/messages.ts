@@ -23,6 +23,7 @@ export const messages = pgTable(
     cacheCreationTokens: integer('cache_creation_tokens'),
     cacheReadTokens: integer('cache_read_tokens'),
     isSidechain: boolean('is_sidechain').default(false).notNull(),
+    host: text('host').notNull().default('local'),
   },
   (t) => [index('messages_session_idx').on(t.sessionId, t.timestamp)],
 )

@@ -14,6 +14,7 @@ export const events = pgTable(
     gitBranch: text('git_branch'),
     ccVersion: text('cc_version'),
     entrypoint: text('entrypoint'),
+    host: text('host').notNull().default('local'),
     isSidechain: boolean('is_sidechain').default(false).notNull(),
     agentId: text('agent_id'),
     requestId: text('request_id'),
