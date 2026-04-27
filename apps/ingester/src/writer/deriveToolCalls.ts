@@ -26,7 +26,7 @@ function extractToolResults(e: ParsedEvent): ToolResultBlock[] {
   return content.filter((b: any): b is ToolResultBlock => b?.type === 'tool_result')
 }
 
-export async function deriveToolCallsFromEvents(db: Db, batch: ParsedEvent[]): Promise<number> {
+export async function deriveToolCallsFromEvents(db: Db, batch: ParsedEvent[], opts: { host: string }): Promise<number> {
   // Index results by tool_use_id within the batch — sufficient for streaming since tool results
   // appear in the SAME file, close to their tool_use event.
   const resultIndex = new Map<string, { event: ParsedEvent; block: ToolResultBlock }>()
@@ -52,6 +52,7 @@ export async function deriveToolCallsFromEvents(db: Db, batch: ParsedEvent[]): P
         durationMs,
         isError: pair?.block.is_error ?? null,
         parentMessageUuid: use.parentMessageUuid,
+        host: opts.host,
       })
     }
   }
