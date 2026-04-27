@@ -25,7 +25,7 @@ async function ingestTranscriptFile(db: ReturnType<typeof getDb>, file: string):
   let buf: ParsedEvent[] = []
   const flush = async () => {
     if (buf.length === 0) return
-    const n = await insertEventsBatch(db, buf)
+    const n = await insertEventsBatch(db, buf, { host: 'local' })
     await deriveMessagesFromEvents(db, buf)
     await deriveToolCallsFromEvents(db, buf)
     events += n

@@ -9,6 +9,7 @@ config({ path: resolve(__dirname, '../../../.env.local') })
 
 import postgres from 'postgres'
 import { drizzle } from 'drizzle-orm/postgres-js'
+import { inArray } from 'drizzle-orm'
 import { events } from '@cca/db'
 import { insertEventsBatch } from '../src/writer/events.js'
 import type { ParsedEvent } from '@cca/core'
@@ -43,14 +44,14 @@ describe('writer: events', () => {
   afterAll(async () => { await sql.end() })
 
   it('inserts one event', async () => {
-    const n = await insertEventsBatch(db, [sample])
+    const n = await insertEventsBatch(db, [sample], { host: 'local' })
     expect(n).toBe(1)
     const rows = await sql`SELECT uuid FROM events WHERE uuid = ${sample.uuid}`
     expect(rows).toHaveLength(1)
   })
 
   it('is idempotent on uuid conflict', async () => {
-    const n = await insertEventsBatch(db, [sample, sample])
+    const n = await insertEventsBatch(db, [sample, sample], { host: 'local' })
     expect(n).toBe(0)  // both conflict
   })
 
@@ -59,7 +60,20 @@ describe('writer: events', () => {
       ...sample,
       uuid: `00000000-0000-0000-0000-${String(i + 100).padStart(12, '0')}`,
     }))
-    const n = await insertEventsBatch(db, batch)
+    const n = await insertEventsBatch(db, batch, { host: 'local' })
     expect(n).toBe(1000)
+  })
+
+  it('stamps the provided host on every inserted event', async () => {
+    const u1 = '00000000-0000-0000-0000-0000000a0001'
+    const u2 = '00000000-0000-0000-0000-0000000a0002'
+    const batch: ParsedEvent[] = [
+      { ...sample, uuid: u1, payload: { uuid: u1 } },
+      { ...sample, uuid: u2, payload: { uuid: u2 } },
+    ]
+    await insertEventsBatch(db, batch, { host: 'hostinger' })
+    const rows = await db.select().from(events).where(inArray(events.uuid, [u1, u2]))
+    expect(rows).toHaveLength(2)
+    expect(rows.every((r) => r.host === 'hostinger')).toBe(true)
   })
 })

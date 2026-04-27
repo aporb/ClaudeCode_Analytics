@@ -52,7 +52,7 @@ describe('derive messages', () => {
   afterAll(async () => { await sql.end() })
 
   it('inserts a message row with flattened text and usage', async () => {
-    await insertEventsBatch(db, [assistantEvent])
+    await insertEventsBatch(db, [assistantEvent], { host: 'local' })
     const n = await deriveMessagesFromEvents(db, [assistantEvent])
     expect(n).toBe(1)
     const rows = await sql`SELECT * FROM messages WHERE uuid = ${assistantEvent.uuid}`
