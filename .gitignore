@@ -12,6 +12,8 @@ scripts/run-sync.sh
 .next/
 cca.remotes.json
 .cca/
+.claude/
+MORNING.md
 
 # Visual brainstorming companion artifacts
 .superpowers/

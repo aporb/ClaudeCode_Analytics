@@ -4,9 +4,9 @@ import { flatToRealPath, realToFlatPath, projectPathFromFile } from '../src/path
 describe('paths', () => {
   // flat → real: component boundaries with '_' round-trip; internal '_' and '-' are lossy.
   it('converts unambiguous flat CC path back to real filesystem path', () => {
-    // '-Users-amynporb-projects-myapp' has NO '--' and no ambiguity.
-    expect(flatToRealPath('-Users-amynporb-projects-myapp'))
-      .toBe('/Users/amynporb/projects/myapp')
+    // '-Users-someuser-projects-myapp' has NO '--' and no ambiguity.
+    expect(flatToRealPath('-Users-someuser-projects-myapp'))
+      .toBe('/Users/someuser/projects/myapp')
   })
 
   it('handles "--" in flat path decoding to "_" (mid-component, not boundary)', () => {
@@ -25,32 +25,32 @@ describe('paths', () => {
   })
 
   it('round-trips a real path with no "-" and component-boundary "_" only', () => {
-    const real = '/Users/amynporb/projects/myapp'
+    const real = '/Users/someuser/projects/myapp'
     expect(flatToRealPath(realToFlatPath(real))).toBe(real)
   })
 
   it('documents lossy round-trip: "_" after "/" does not survive', () => {
-    // realToFlatPath('/Users/amynporb/Documents/_Projects/myapp'):
-    //   '_' → '--' gives 'Users/amynporb/Documents/--Projects/myapp'
-    //   '/' → '-' gives 'Users-amynporb-Documents---Projects-myapp'
-    //   prepend '-' → '-Users-amynporb-Documents---Projects-myapp'
-    // flatToRealPath of that: strip '-' → 'Users-amynporb-Documents---Projects-myapp'
+    // realToFlatPath('/Users/someuser/Documents/_Projects/myapp'):
+    //   '_' → '--' gives 'Users/someuser/Documents/--Projects/myapp'
+    //   '/' → '-' gives 'Users-someuser-Documents---Projects-myapp'
+    //   prepend '-' → '-Users-someuser-Documents---Projects-myapp'
+    // flatToRealPath of that: strip '-' → 'Users-someuser-Documents---Projects-myapp'
     //   '---' contains '--' at pos 0 → '\0-' (left-to-right non-overlapping)
     //   '-'→'/' → '\0/' then '\0'→'_' → '_/'
-    //   result: '/Users/amynporb/Documents_/Projects/myapp'  ← '_' and '/' swapped!
+    //   result: '/Users/someuser/Documents_/Projects/myapp'  ← '_' and '/' swapped!
     // This is a lossy case in the algorithm; the test documents actual behavior.
-    const real = '/Users/amynporb/Documents/_Projects/myapp'
-    expect(flatToRealPath(realToFlatPath(real))).toBe('/Users/amynporb/Documents_/Projects/myapp')
+    const real = '/Users/someuser/Documents/_Projects/myapp'
+    expect(flatToRealPath(realToFlatPath(real))).toBe('/Users/someuser/Documents_/Projects/myapp')
   })
 
   it('extracts project path from a full transcript file path', () => {
-    const f = '/Users/amynporb/.claude/projects/-Users-amynporb-projects-myapp/abc.jsonl'
-    expect(projectPathFromFile(f)).toBe('/Users/amynporb/projects/myapp')
+    const f = '/Users/someuser/.claude/projects/-Users-someuser-projects-myapp/abc.jsonl'
+    expect(projectPathFromFile(f)).toBe('/Users/someuser/projects/myapp')
   })
 
   it('extracts project path for subagent file', () => {
-    const f = '/Users/amynporb/.claude/projects/-Users-amynporb-projects-foo/session123/subagents/agent-abc.jsonl'
-    expect(projectPathFromFile(f)).toBe('/Users/amynporb/projects/foo')
+    const f = '/Users/someuser/.claude/projects/-Users-someuser-projects-foo/session123/subagents/agent-abc.jsonl'
+    expect(projectPathFromFile(f)).toBe('/Users/someuser/projects/foo')
   })
 
   it('returns null when file is not under .claude/projects', () => {

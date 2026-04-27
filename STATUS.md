@@ -42,7 +42,7 @@ Top 3 tools: `Read` (25,879 calls), `Bash` (21,905), `Edit` (8,897).
 ### Issues known but deferred
 
 1. **Ingest errors: 12 JSONL files (~0.4%) failed with `unsupported Unicode escape sequence`.** These contain `\u0000` bytes embedded inside string values, which Postgres's JSONB type rejects. Sanitize in the parser on Plan 2: strip `\u0000` before JSON.parse or after.
-2. **Project-path display is lossy.** `/Users/amynporb/Documents/_Projects/2026-books` flattens to `-Users-amynporb-Documents--Projects-2026-books` on disk, and the reverse heuristic produces `/Users/amynporb/Documents_Projects/2026/books`. The underlying `events.cwd` column preserves the real path verbatim — for accurate display in the future web UI, prefer `cwd` over `project_path`. See `docs/superpowers/specs/2026-04-19-claude-code-analytics-design.md` §11 & `packages/core/src/paths.ts` for the lossy-encoding notes.
+2. **Project-path display is lossy.** A path like `/Users/<you>/Documents/_Projects/2026-books` flattens to `-Users-<you>-Documents--Projects-2026-books` on disk, and the reverse heuristic produces `/Users/<you>/Documents_Projects/2026/books`. The underlying `events.cwd` column preserves the real path verbatim — for accurate display in the future web UI, prefer `cwd` over `project_path`. See `docs/superpowers/specs/2026-04-19-claude-code-analytics-design.md` §11 & `packages/core/src/paths.ts` for the lossy-encoding notes.
 3. **First-run "85 events" counter in orchestrator output was misleading.** It reflects rows newly inserted in the most recent re-run (the first run had partially populated `events` before crashing on prompts_history's oversized unique-index rows — since fixed via `0005_prompts_history_dedup_fix.sql`).
 4. **Test isolation**: `vitest.config.ts` has `fileParallelism: false` to avoid TRUNCATE races between writer test files. Future improvement: switch remaining writer tests to scoped `DELETE WHERE session_id = ...` and re-enable parallelism.
 
@@ -189,7 +189,7 @@ Branch: `feat/multi-host-ingest`. 27 commits. Built overnight from spec → plan
 
 ### Live E2E (rollout)
 
-- First sync of `hostinger` (`root@wala-server`, 31 MB): **6,146 events / 44 sessions / 94 history / 174 file snapshots** ingested.
+- First sync of `hostinger` (a remote Linux box, 31 MB): **6,146 events / 44 sessions / 94 history / 174 file snapshots** ingested.
 - First sync of `picoclaw` (`picoclaw` via `~/.ssh/config`): **3,803 events / 15 sessions / 81 history / 231 file snapshots** ingested.
 - launchd plist loaded; next scheduled tick at ~08:30 EDT for both hosts.
 - DB snapshot taken before migration: `~/Library/Logs/cca/claude_code-pre-multi-host-20260426-225033.dump` (1.08 GB).
