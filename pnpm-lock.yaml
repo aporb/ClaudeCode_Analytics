@@ -32,6 +32,9 @@ importers:
       '@cca/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@cca/ingester':
+        specifier: workspace:*
+        version: link:../ingester
       commander:
         specifier: 12.1.0
         version: 12.1.0
