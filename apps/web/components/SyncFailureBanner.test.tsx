@@ -5,7 +5,7 @@ import type { FailingHost } from '@/lib/queries/hosts'
 
 // Mock the query module so the banner doesn't hit a real DB.
 const { getFailingHostsMock, cookieMap } = vi.hoisted(() => ({
-  getFailingHostsMock: vi.fn<[], Promise<FailingHost[]>>(),
+  getFailingHostsMock: vi.fn<() => Promise<FailingHost[]>>(),
   cookieMap: new Map<string, string>(),
 }))
 vi.mock('@/lib/queries/hosts', async () => {
