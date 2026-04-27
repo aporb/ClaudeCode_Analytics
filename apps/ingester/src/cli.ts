@@ -18,7 +18,7 @@ program
   .option('--concurrency <n>', 'parallel file readers', '6')
   .action(async (opts) => {
     const home = process.env.CLAUDE_HOME ?? `${process.env.HOME}/.claude`
-    await backfillAll(home, { concurrency: Number(opts.concurrency) })
+    await backfillAll(home, { concurrency: Number(opts.concurrency), host: 'local' })
     await closeDb()
   })
 
