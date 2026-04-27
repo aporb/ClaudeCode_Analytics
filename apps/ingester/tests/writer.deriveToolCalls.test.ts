@@ -51,7 +51,7 @@ describe('derive tool_calls', () => {
   afterAll(async () => { await sql.end() })
 
   it('pairs tool_use with tool_result and computes duration', async () => {
-    await insertEventsBatch(db, [toolUseEvent, toolResultEvent])
+    await insertEventsBatch(db, [toolUseEvent, toolResultEvent], { host: 'local' })
     const n = await deriveToolCallsFromEvents(db, [toolUseEvent, toolResultEvent])
     expect(n).toBe(1)
     const rows = await sql`SELECT * FROM tool_calls WHERE uuid = ${toolUseEvent.uuid}`

@@ -51,7 +51,7 @@ describe('rollup sessions', () => {
         usage: { input_tokens: 1_000_000, output_tokens: 500_000, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
       }},
     }
-    await insertEventsBatch(db, [e1, e2])
+    await insertEventsBatch(db, [e1, e2], { host: 'local' })
     await deriveMessagesFromEvents(db, [e1, e2])
     await rollupSessions(db, ['s-roll'])
 

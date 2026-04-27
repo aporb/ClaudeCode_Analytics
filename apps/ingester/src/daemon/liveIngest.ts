@@ -43,7 +43,7 @@ export async function ingestFileDelta(
     sessionIds.add(e.sessionId)
   }
 
-  const inserted = await insertEventsBatch(db, batch)
+  const inserted = await insertEventsBatch(db, batch, { host: 'local' })
   if (inserted > 0) {
     await deriveMessagesFromEvents(db, batch)
     await deriveToolCallsFromEvents(db, batch)

@@ -5,7 +5,11 @@ import type { ParsedEvent } from '@cca/core'
 
 type Db = PostgresJsDatabase<typeof schema>
 
-export async function insertEventsBatch(db: Db, batch: ParsedEvent[]): Promise<number> {
+export async function insertEventsBatch(
+  db: Db,
+  batch: ParsedEvent[],
+  opts: { host: string },
+): Promise<number> {
   if (batch.length === 0) return 0
   const rows = batch.map((e) => ({
     uuid: e.uuid,
@@ -24,6 +28,7 @@ export async function insertEventsBatch(db: Db, batch: ParsedEvent[]): Promise<n
     requestId: e.requestId ?? null,
     payload: e.payload as object,
     sourceFile: e.sourceFile,
+    host: opts.host,
   }))
   const result = await db
     .insert(events)
