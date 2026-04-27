@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "exports": {
+    "./sync": "./src/sync/index.ts"
+  },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "backfill": "tsx src/cli.ts backfill",

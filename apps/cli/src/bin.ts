@@ -10,6 +10,7 @@ import { searchCommand } from './commands/search.js'
 import { statsCommand } from './commands/stats.js'
 import { tailCommand } from './commands/tail.js'
 import { openCommand } from './commands/open.js'
+import { syncCommand } from './commands/sync.js'
 
 const program = new Command()
 program.name('cca').description('Claude Code Analytics CLI').version('0.1.0')
@@ -21,5 +22,6 @@ program.addCommand(searchCommand())
 program.addCommand(statsCommand())
 program.addCommand(tailCommand())
 program.addCommand(openCommand())
+program.addCommand(syncCommand())
 
 program.parseAsync().catch((e) => { console.error(e); process.exit(1) })
