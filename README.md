@@ -6,6 +6,22 @@ Local-first observability for [Claude Code](https://claude.com/claude-code) sess
 
 **No cloud. No API keys. No telemetry.** Your data stays on `localhost`.
 
+### Dashboard
+
+<p align="center">
+  <img src="docs/screenshots/cca-home.png" alt="Cost command center" width="700">
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/cca-sessions.png" alt="Sessions list" width="350">
+  <img src="docs/screenshots/cca-session-detail.png" alt="Session detail" width="350">
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/cca-search.png" alt="Full-text search" width="350">
+  <img src="docs/screenshots/cca-stats.png" alt="Behavior analytics" width="350">
+</p>
+
 ---
 
 ## What you get
