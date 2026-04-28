@@ -11,7 +11,7 @@
 **Working branch:** `feat/dashboard-redesign` — create from `main` before Task 1.
 
 ```bash
-cd /Users/amynporb/Documents/_Projects/ClaudeCode_Analytics
+cd <repo-root>
 git checkout -b feat/dashboard-redesign
 ```
 

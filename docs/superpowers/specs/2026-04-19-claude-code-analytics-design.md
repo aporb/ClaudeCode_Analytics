@@ -2,8 +2,8 @@
 
 - **Date:** 2026-04-19
 - **Status:** Approved, ready for implementation plan
-- **Author:** Amyn Porbanderwala + Claude (brainstorming session)
-- **Working directory:** `/Users/amynporb/Documents/_Projects/ClaudeCode_Analytics`
+- **Author:** aporb + Claude (brainstorming session)
+- **Working directory:** `<repo-root>`
 
 ---
 

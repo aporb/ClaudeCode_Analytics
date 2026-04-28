@@ -216,7 +216,7 @@ coverage/
 # Existing Supabase container on port 54322. Create `claude_code` DB inside it.
 CCA_DATABASE_URL=postgresql://postgres:postgres@localhost:54322/claude_code
 CCA_DATABASE_URL_TEST=postgresql://postgres:postgres@localhost:54322/claude_code_test
-CLAUDE_HOME=/Users/amynporb/.claude
+CLAUDE_HOME=~/.claude
 ```
 
 - [ ] **Step 8: Create `.env.local` (gitignored, real values)**
@@ -224,7 +224,7 @@ CLAUDE_HOME=/Users/amynporb/.claude
 ```
 CCA_DATABASE_URL=postgresql://postgres:postgres@localhost:54322/claude_code
 CCA_DATABASE_URL_TEST=postgresql://postgres:postgres@localhost:54322/claude_code_test
-CLAUDE_HOME=/Users/amynporb/.claude
+CLAUDE_HOME=~/.claude
 ```
 
 - [ ] **Step 9: Create minimal `README.md`**
@@ -1289,7 +1289,7 @@ git commit -m "feat(db): add usage_daily materialized view"
 - Create: `packages/core/src/paths.ts`
 - Create: `packages/core/tests/paths.test.ts`
 
-**Context:** Claude Code stores per-project transcripts under a flattened path — `/Users/amynporb/Documents/_Projects/foo` becomes `~/.claude/projects/-Users-amynporb-Documents--Projects-foo/`. Double underscores in the path (`_Projects`) become double dashes. We need to reverse this for the UI and for grouping by project.
+**Context:** Claude Code stores per-project transcripts under a flattened path — `/home/user/projects/foo` becomes `~/.claude/projects/-home-user-projects-foo/`. Double underscores in the path (`_projects`) become double dashes. We need to reverse this for the UI and for grouping by project.
 
 - [ ] **Step 1: Write the failing test** at `packages/core/tests/paths.test.ts`
 
@@ -1299,23 +1299,23 @@ import { flatToRealPath, realToFlatPath, projectPathFromFile } from '../src/path
 
 describe('paths', () => {
   it('converts flat CC path back to real filesystem path', () => {
-    expect(flatToRealPath('-Users-amynporb-Documents--Projects-ClaudeCode-Analytics'))
-      .toBe('/Users/amynporb/Documents/_Projects/ClaudeCode_Analytics')
+    expect(flatToRealPath('-home-user-projects-ClaudeCode-Analytics'))
+      .toBe('/home/user/projects/ClaudeCode_Analytics')
   })
 
   it('round-trips a real path', () => {
-    const real = '/Users/amynporb/Documents/_Projects/foo-bar'
+    const real = '/home/user/projects/foo-bar'
     expect(flatToRealPath(realToFlatPath(real))).toBe(real)
   })
 
   it('extracts project path from a full transcript file path', () => {
-    const f = '/Users/amynporb/.claude/projects/-Users-amynporb-Documents--Projects-ClaudeCode-Analytics/abc.jsonl'
-    expect(projectPathFromFile(f)).toBe('/Users/amynporb/Documents/_Projects/ClaudeCode_Analytics')
+    const f = '/home/user/.claude/projects/-home-user-projects-ClaudeCode-Analytics/abc.jsonl'
+    expect(projectPathFromFile(f)).toBe('/home/user/projects/ClaudeCode_Analytics')
   })
 
   it('extracts project path for subagent file', () => {
-    const f = '/Users/amynporb/.claude/projects/-Users-amynporb-Documents--Projects-foo/session123/subagents/agent-abc.jsonl'
-    expect(projectPathFromFile(f)).toBe('/Users/amynporb/Documents/_Projects/foo')
+    const f = '/home/user/.claude/projects/-home-user-projects-foo/session123/subagents/agent-abc.jsonl'
+    expect(projectPathFromFile(f)).toBe('/home/user/projects/foo')
   })
 })
 ```

@@ -2,8 +2,8 @@
 
 - **Date:** 2026-04-26
 - **Status:** Draft, pending user approval
-- **Author:** Amyn Porbanderwala + Claude (brainstorming session)
-- **Working directory:** `/Users/amynporb/Documents/_Projects/ClaudeCode_Analytics`
+- **Author:** aporb + Claude (brainstorming session)
+- **Working directory:** `<repo-root>`
 - **Builds on:** `docs/superpowers/specs/2026-04-19-claude-code-analytics-design.md` (foundational architecture) and `docs/superpowers/specs/2026-04-26-cca-dashboard-redesign.md` (cost command center).
 
 ---

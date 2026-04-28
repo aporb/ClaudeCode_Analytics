@@ -8,7 +8,7 @@ Three components, all on `localhost`:
 - **CLI** (`apps/cli`) — `pnpm cca {status,sessions,replay,search,stats,sync,tail,open}` for terminal queries.
 - **Web** (`apps/web`) — Next.js 16 App Router on `:3939`. Cost command center on `/`, sessions list, session detail/replay, full-text search, behavior trends, per-host breakdown.
 
-See `STATUS.md` for what shipped when and `docs/superpowers/specs/` for the design docs.
+See `docs/superpowers/specs/` for the design docs and `docs/superpowers/plans/` for per-plan build notes.
 
 ## Architecture at a glance
 
@@ -311,7 +311,7 @@ Tests hit the real `claude_code_test` database, which `drizzle-kit push` keeps i
 
 ## Known deferred issues
 
-See `STATUS.md` for the running list. The two that travel with the project are:
+The two that travel with the project are:
 
 - **` ` in JSONL string values** — already stripped in `packages/parsers/src/jsonl.ts`, but if a brand-new event type sneaks one in elsewhere, ingest will throw on the offending file.
 - **Lossy project-path encoding** in CC's flat directory format — the daemon prefers the verbatim `events.cwd` for display; never round-trip through the encoded folder name.
@@ -320,4 +320,3 @@ See `STATUS.md` for the running list. The two that travel with the project are:
 
 - Spec: `docs/superpowers/specs/2026-04-19-claude-code-analytics-design.md`
 - Plans: `docs/superpowers/plans/2026-04-19-cca-{foundation,live-capture-and-cli,web-ui}.md`
-- Per-plan completion notes: `STATUS.md`

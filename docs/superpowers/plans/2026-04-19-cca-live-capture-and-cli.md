@@ -93,7 +93,7 @@ Edit `apps/ingester/package.json`. In `dependencies`, add `"chokidar": "4.0.1"`.
 - [ ] **Step 2: Install**
 
 ```bash
-cd /Users/amynporb/Documents/_Projects/ClaudeCode_Analytics
+cd <repo-root>
 pnpm install
 ```
 
@@ -1299,7 +1299,7 @@ program.parseAsync().catch((e) => { console.error(e); process.exit(1) })
 - [ ] **Step 4: Install and verify**
 
 ```bash
-cd /Users/amynporb/Documents/_Projects/ClaudeCode_Analytics
+cd <repo-root>
 pnpm install
 pnpm --filter @cca/cli typecheck
 pnpm --filter @cca/cli run cca -- --help
@@ -1392,7 +1392,7 @@ Place `addCommand` before `program.parseAsync()`.
 - [ ] **Step 3: Smoke**
 
 ```bash
-cd /Users/amynporb/Documents/_Projects/ClaudeCode_Analytics
+cd <repo-root>
 pnpm cca status
 ```
 
@@ -2072,7 +2072,7 @@ git commit -m "test(ingester): daemon e2e — tailer + SSE + hook status"
 - [ ] **Step 1: Install the hooks**
 
 ```bash
-cd /Users/amynporb/Documents/_Projects/ClaudeCode_Analytics
+cd <repo-root>
 bash scripts/install-hooks.sh
 jq '.hooks | keys' ~/.claude/settings.json
 ```
