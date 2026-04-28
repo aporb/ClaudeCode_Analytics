@@ -17,11 +17,6 @@ Local-first observability for [Claude Code](https://claude.com/claude-code) sess
   <img src="docs/screenshots/cca-session-detail.png" alt="Session detail" width="350">
 </p>
 
-<p align="center">
-  <img src="docs/screenshots/cca-search.png" alt="Full-text search" width="350">
-  <img src="docs/screenshots/cca-stats.png" alt="Behavior analytics" width="350">
-</p>
-
 ---
 
 ## What you get
